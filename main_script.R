@@ -26,7 +26,9 @@
     "COLLISION_ID"
   )
   
-  cutoff_date <- as.Date("2016-01-01")
+  min_cutoff_date <- as.Date("2016-01-01")
+  max_cutoff_date <- as.Date("2022-01-01")
+  
   ## Create broader categories for main causes
   conditions <- c("Aggressive Driving/Road Rage", "Pavement Slippery", "Following Too Closely", 
                   "Unspecified", "", "Passing Too Closely", "Driver Inexperience", 
@@ -69,17 +71,16 @@
   vehicles_df <- vehicles_df %>%
     mutate(CRASH.DATE = as.Date(CRASH.DATE, format = "%m/%d/%Y")) %>%  # Convert CRASH.DATE to Date format
     select(-all_of(columns_to_remove)) %>%
-    filter(CRASH.DATE >= cutoff_date) %>%
+    filter(CRASH.DATE >= min_cutoff_date) %>%
+    filter(CRASH.DATE < max_cutoff_date) %>%
     filter(!is.na(LATITUDE) & !is.na(LONGITUDE)) %>%
     filter(!is.na(CRASH.TIME)) %>%
     ##create new column with broader category for accident
     mutate(Category = sapply(CONTRIBUTING.FACTOR.VEHICLE.1, categorize_condition)) %>%
     # Combine date and time into one string
-    mutate(CRASH.TIME.FORMATTED = as.POSIXct(paste(CRASH.DATE, CRASH.TIME), format = "%Y-%m-%d %H:%M")) %>%
-    # Round up to the next hour
-    mutate(CRASH.TIME.FORMATTED = ceiling_date(CRASH.TIME.FORMATTED, "hour")) %>%
-    # Create the final CRASH.DATETIME column
-    mutate(CRASH.DATETIME = CRASH.TIME.FORMATTED) %>%
+    mutate(CRASH.DATETIME = as.POSIXct(paste(CRASH.DATE, CRASH.TIME), format = "%Y-%m-%d %H:%M")) %>%
+    # Round down to the current hour
+    mutate(CRASH.DATETIME = floor_date(CRASH.DATETIME, "hour")) %>%
     # enriching datetime format to weekdays, month, quarter, year
     mutate(
       Weekday = wday(CRASH.DATETIME, label = TRUE, abbr = FALSE), 
@@ -121,5 +122,3 @@
     filename <- paste0("merged_data_", year, ".csv")
     write.csv(split_datasets[[year]], file = filename, row.names = FALSE)
   })
-  
-  nan_count_per_column <- sapply(weather_df, function(x) sum(is.na(x)))
