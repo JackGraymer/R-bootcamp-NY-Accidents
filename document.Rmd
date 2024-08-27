@@ -2,12 +2,45 @@
 title: "Road accidents in New York"
 author: "Luca Renz & Alvaro Cervan"
 date: "30/08/2024"
-output: 
-    pdf_document: 
-        toc: true 
-        number_sections: true
+output:
+  html_document:
+    toc: true
+    df_print: paged
+  pdf_document:
+    toc: true
+    number_sections: true
 ---
 
 ## Road accidents in New York
+```{r setup, include=FALSE}
+# Global options
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+### Total Accidents in New York
+```{r total_accidents}
+# Loading necessary libraries
+library(ggplot2)
+library(dplyr)
+
+# Load the data from a CSV file
+data <- read.csv("data/merged_all_years.csv", header = TRUE)
+
+# Convert the CRASH.DATE into a Date object
+data$CRASH.DATE <- as.Date(data$CRASH.DATE, "%d/%m/%Y")
+
+# Aggregating data by Year
+yearly_accidents <- data %>%
+  group_by(Year) %>%
+  summarise(Total_Accidents = n(), .groups = 'drop')
+
+# Plotting the data
+ggplot(yearly_accidents, aes(x = Year, y = Total_Accidents, fill = Year)) +
+  geom_bar(stat = "identity") +  # Set a single color for the bars
+  labs(title = "Total Accidents per Year",
+       x = "Year",
+       y = "Number of Accidents") + theme_minimal() + theme(legend.position = "none")
+
+```
+</details>
 
 ## Chapter of Choice (Map (Maybe html/interactive))
