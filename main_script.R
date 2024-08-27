@@ -112,6 +112,14 @@
   # MERGING DATAFRAMES
   merged_df <- left_join(vehicles_df, weather_df, by = c("CRASH.DATETIME" = "time"))
   
-  write.csv(merged_df,"merged.csv")
+  write.csv(merged_df,"merged_all_years.csv")
+  
+  split_datasets <- split(merged_df, merged_df$Year)
+  
+  # Save each year to a separate file
+  lapply(names(split_datasets), function(year) {
+    filename <- paste0("merged_data_", year, ".csv")
+    write.csv(split_datasets[[year]], file = filename, row.names = FALSE)
+  })
   
   nan_count_per_column <- sapply(weather_df, function(x) sum(is.na(x)))
