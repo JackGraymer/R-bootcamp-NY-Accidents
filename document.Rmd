@@ -1,0 +1,13 @@
+---
+title: "Road accidents in New York"
+author: "Luca Renz & Alvaro Cervan"
+date: "30/08/2024"
+output: 
+    pdf_document: 
+        toc: true 
+        number_sections: true
+---
+
+## Road accidents in New York
+
+## Chapter of Choice (Map (Maybe html/interactive))
