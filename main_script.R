@@ -1,12 +1,12 @@
   ## packages
   
-  # install.packages("lubridate")
+   install.packages("lubridate")
   library(lubridate) # used to round to the next hour
   
-  # install.packages("dplyr")
+   install.packages("dplyr")
   library(dplyr)
   
-  # install.packages("readxl")
+   install.packages("readxl")
   library(readxl)
   
   # VEHICLES DF - CLEANING

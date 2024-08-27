@@ -8,6 +8,32 @@ output:
         number_sections: true
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
 ## Road accidents in New York
 
 ## Chapter of Choice (Map (Maybe html/interactive))
+
+```{r Map}
+#install.packages("sf")
+#install.packages("terra")
+#install.packages("spData")
+#install.packages("spDataLarge", repos = "https://nowosad.r-universe.dev")
+library(sf)            # classes and functions for vector data
+#> Linking to GEOS 3.10.2, GDAL 3.4.1, PROJ 8.2.1; sf_use_s2() is TRUE
+library(terra)         # classes and functions for raster data
+#> Terra version 1.4.12
+library(spData)        # sample spatial data
+library(spDataLarge)   # large sample spatial data
+
+```
+
+```{r}
+
+#plot new york
+ny <- st_read(system.file("shape/ny.shp", package="sf"))
+plot(ny["NAME"])
+
+```
