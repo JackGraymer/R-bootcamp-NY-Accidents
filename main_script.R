@@ -12,6 +12,8 @@ library(readxl)
 # VEHICLES DF - CLEANING
 vehicles_df <- read.csv("data/vehicles.csv", header=TRUE)
 vehicles_df$CRASH.DATE <- as.Date(vehicles_df$CRASH.DATE, format = "%m/%d/%Y")
+
+## columns to be removed due to high NaN ratio.
 columns_to_remove <- c(
                        "CROSS.STREET.NAME",
                        "ON.STREET.NAME",
@@ -27,9 +29,18 @@ columns_to_remove <- c(
 vehicles_df <- vehicles_df %>%
   select(-all_of(columns_to_remove))
 
+vehicles_df <- vehicles_df %>%
+  filter(!is.na(LATITUDE) & !is.na(LONGITUDE))
 
-# Create broader categories for main causes
-# Your list of strings
+vehicles_df <- vehicles_df %>%
+  filter(!is.na(CRASH.TIME))
+
+## Define the cutoff date as other dataframe starts with 2016
+cutoff_date <- as.Date("2016-01-01")
+vehicles_df <- vehicles_df[vehicles_df$CRASH.DATE >= cutoff_date, ]
+
+
+## Create broader categories for main causes
 conditions <- c("Aggressive Driving/Road Rage", "Pavement Slippery", "Following Too Closely", 
                 "Unspecified", "", "Passing Too Closely", "Driver Inexperience", 
                 "Passing or Lane Usage Improper", "Turning Improperly", "Unsafe Lane Changing", 
@@ -51,7 +62,7 @@ conditions <- c("Aggressive Driving/Road Rage", "Pavement Slippery", "Following 
                 "Reaction to Other Uninvolved Vehicle", "1", "Drugs (Illegal)", "Illness", 
                 "Cell Phone (hand-held)")
 
-# Create categorizatoin/mapping for conditions
+## mapping for conditions
 categorize_condition <- function(condition) {
   if (grepl("Driving|Following|Passing|Inexperience|Improper|Changing|Speed|Distraction|Alcohol|Drugs|Phone|Eating|Fatigued|Sleeping|Pedestrian|Failure to Yield|Backing|Oversized", condition, ignore.case = TRUE)) {
     return("Human Error")
@@ -68,33 +79,55 @@ categorize_condition <- function(condition) {
   }
 }
 
-
-# create new column with broader category for accident
+##create new column with broader category for accident
 vehicles_df <- vehicles_df %>%
   mutate(Category = sapply(CONTRIBUTING.FACTOR.VEHICLE.1, categorize_condition))
 
-# Define the cutoff date as other dataframe starts with 2016
-cutoff_date <- as.Date("2016-01-01")
-vehicles_df <- vehicles_df[vehicles_df$CRASH.DATE >= cutoff_date, ]
 vehicles_df <- vehicles_df %>%
   # Combine date and time into one string
-  mutate(CRASH.TIME = as.POSIXct(paste(CRASH.DATE, CRASH.TIME), format = "%Y-%m-%d %H:%M")) %>%
+  mutate(CRASH.TIME.FORMATTED = as.POSIXct(paste(CRASH.DATE, CRASH.TIME), format = "%Y-%m-%d %H:%M")) %>%
   # Round up to the next hour
-  mutate(CRASH.TIME = ceiling_date(CRASH.TIME, "hour")) %>%
+  mutate(CRASH.TIME.FORMATTED = ceiling_date(CRASH.TIME.FORMATTED, "hour")) %>%
   # Create the final CRASH.DATETIME column
-  mutate(CRASH.DATETIME = CRASH.TIME)
+  mutate(CRASH.DATETIME = CRASH.TIME.FORMATTED)
 
+# enriching datetime format to weekdays, month, quarter, year
+vehicles_df <- vehicles_df %>%
+  mutate(
+    Weekday = wday(CRASH.DATETIME, label = TRUE, abbr = FALSE), # Extract full weekday name
+    Month = month(CRASH.DATETIME, label = TRUE, abbr = FALSE),  # Extract full month name
+    Quarter = quarter(CRASH.DATETIME),                          # Extract quarter (1-4)
+    Year = year(CRASH.DATETIME) ,
+    Day = day(CRASH.DATETIME),
+    Hour = hour(CRASH.DATETIME),  
+    TimeOfDay = case_when(                                      # Categorize time of day
+      Hour >= 6 & Hour < 12  ~ "Morning",
+      Hour >= 12 & Hour < 17 ~ "Afternoon",
+      Hour >= 17 & Hour < 21 ~ "Evening",
+      Hour >= 21 & Hour < 6 ~ "Night",
+      TRUE ~ "Unknown",
+      # Everything else is Night
+    )# Extract day of the month (1-31)# Extract year
+  )
+
+vehicles_df <- vehicles_df %>%
+  filter(!is.na(CRASH.TIME))
 
 # WEATHER DF - CLEANING
 weather_df <- read_excel("data/weather.xlsx")
+weather_df <- weather_df %>%
+  rename("temperature_celsius" = "temperature_2m (Â°C)", "winddirection_10m_degrees" = "winddirection_10m (Â°)")
 
 # Convert the TIME column to correct format
 weather_df <- weather_df %>%
   mutate(time = as.POSIXct(time, format = "%Y-%m-%dT%H:%M"))
-glimpse(weather_df)
 
+weather_df <- weather_df %>%
+  filter(!is.na(time))
 
 # MERGING DATAFRAMES
-merged_df <- inner_join(vehicles_df, weather_df, by = c("CRASH.DATETIME" = "time"))
+merged_df <- left_join(vehicles_df, weather_df, by = c("CRASH.DATETIME" = "time"))
 
 write.csv(merged_df,"merged.csv")
+
+# nan_count_per_column <- sapply(weather_df, function(x) sum(is.na(x)))
