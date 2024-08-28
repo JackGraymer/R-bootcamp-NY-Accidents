@@ -54,5 +54,7 @@ data/
 # ignore document.html
 document.html
 
-# ignore document.pdf
+# ignore .pdf
 .pdf
+
+.idea/*
