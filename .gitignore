@@ -55,4 +55,4 @@ data/
 document.html
 
 # ignore document.pdf
-document.pdf
+.pdf
