@@ -1628,8 +1628,15 @@ display: none;
 
 <div id="TOC">
 <ul>
-<li><a href="#road-accidents-in-new-york" id="toc-road-accidents-in-new-york">Road accidents in New York</a>
+<li><a href="#road-accidents-in-new-york" id="toc-road-accidents-in-new-york">Road accidents in New York</a></li>
+<li><a href="#data-preparation" id="toc-data-preparation">Data
+Preparation</a>
 <ul>
+<li><a href="#packages" id="toc-packages">Packages</a></li>
+<li><a href="#data-cleaning" id="toc-data-cleaning">Data
+Cleaning</a></li>
+<li><a href="#merging-dataframes" id="toc-merging-dataframes">Merging
+Dataframes</a></li>
 <li><a href="#total-accidents-in-new-york" id="toc-total-accidents-in-new-york">Total Accidents in New
 York</a></li>
 </ul></li>
@@ -1640,6 +1647,140 @@ York</a></li>
 
 <div id="road-accidents-in-new-york" class="section level2">
 <h2>Road accidents in New York</h2>
+</div>
+<div id="data-preparation" class="section level2">
+<h2>Data Preparation</h2>
+<div id="packages" class="section level3">
+<h3>Packages</h3>
+<pre class="r"><code>## packages
+
+#install.packages(&quot;lubridate&quot;)
+library(lubridate) # used to round to the next hour
+
+#install.packages(&quot;dplyr&quot;)
+library(dplyr)
+
+#install.packages(&quot;readxl&quot;)
+library(readxl)</code></pre>
+</div>
+<div id="data-cleaning" class="section level3">
+<h3>Data Cleaning</h3>
+<pre class="r"><code>  # VEHICLES DF - CLEANING
+  vehicles_df &lt;- read.csv(&quot;data/vehicles.csv&quot;, header=TRUE)
+  
+  ## columns to be removed due to high NA ratio.
+  columns_to_remove &lt;- c(
+    &quot;CROSS.STREET.NAME&quot;,
+    &quot;ON.STREET.NAME&quot;,
+    &quot;OFF.STREET.NAME&quot;, 
+    &quot;CONTRIBUTING.FACTOR.VEHICLE.3&quot;,
+    &quot;CONTRIBUTING.FACTOR.VEHICLE.4&quot;, 
+    &quot;CONTRIBUTING.FACTOR.VEHICLE.5&quot;,
+    &quot;VEHICLE.TYPE.CODE.3&quot;,
+    &quot;VEHICLE.TYPE.CODE.4&quot;,
+    &quot;VEHICLE.TYPE.CODE.5&quot;,
+    &quot;COLLISION_ID&quot;
+  )
+  ## Cutoff dates to discard NA values
+  min_cutoff_date &lt;- as.Date(&quot;2016-01-01&quot;)
+  max_cutoff_date &lt;- as.Date(&quot;2022-01-01&quot;)
+  
+  ## Create broader categories for main causes
+  conditions &lt;- c(&quot;Aggressive Driving/Road Rage&quot;, &quot;Pavement Slippery&quot;, &quot;Following Too Closely&quot;, 
+                  &quot;Unspecified&quot;, &quot;&quot;, &quot;Passing Too Closely&quot;, &quot;Driver Inexperience&quot;, 
+                  &quot;Passing or Lane Usage Improper&quot;, &quot;Turning Improperly&quot;, &quot;Unsafe Lane Changing&quot;, 
+                  &quot;Unsafe Speed&quot;, &quot;Reaction to Uninvolved Vehicle&quot;, &quot;Steering Failure&quot;, 
+                  &quot;Traffic Control Disregarded&quot;, &quot;Other Vehicular&quot;, &quot;Driver Inattention/Distraction&quot;, 
+                  &quot;Oversized Vehicle&quot;, &quot;Pedestrian/Bicyclist/Other Pedestrian Error/Confusion&quot;, 
+                  &quot;Alcohol Involvement&quot;, &quot;View Obstructed/Limited&quot;, &quot;Failure to Yield Right-of-Way&quot;, 
+                  &quot;Illnes&quot;, &quot;Lost Consciousness&quot;, &quot;Brakes Defective&quot;, &quot;Backing Unsafely&quot;, &quot;Glare&quot;, 
+                  &quot;Passenger Distraction&quot;, &quot;Fell Asleep&quot;, &quot;Obstruction/Debris&quot;, &quot;Tinted Windows&quot;, 
+                  &quot;Animals Action&quot;, &quot;Drugs (illegal)&quot;, &quot;Pavement Defective&quot;, &quot;Other Lighting Defects&quot;, 
+                  &quot;Outside Car Distraction&quot;, &quot;Driverless/Runaway Vehicle&quot;, &quot;Tire Failure/Inadequate&quot;, 
+                  &quot;Fatigued/Drowsy&quot;, &quot;Headlights Defective&quot;, &quot;Accelerator Defective&quot;, 
+                  &quot;Failure to Keep Right&quot;, &quot;Physical Disability&quot;, &quot;Eating or Drinking&quot;, 
+                  &quot;Cell Phone (hands-free)&quot;, &quot;Lane Marking Improper/Inadequate&quot;, 
+                  &quot;Cell Phone (hand-Held)&quot;, &quot;Using On Board Navigation Device&quot;, &quot;Other Electronic Device&quot;, 
+                  &quot;Traffic Control Device Improper/Non-Working&quot;, &quot;Tow Hitch Defective&quot;, 
+                  &quot;Windshield Inadequate&quot;, &quot;Vehicle Vandalism&quot;, &quot;Shoulders Defective/Improper&quot;, 
+                  &quot;Prescription Medication&quot;, &quot;Listening/Using Headphones&quot;, &quot;Texting&quot;, &quot;80&quot;, 
+                  &quot;Reaction to Other Uninvolved Vehicle&quot;, &quot;1&quot;, &quot;Drugs (Illegal)&quot;, &quot;Illness&quot;, 
+                  &quot;Cell Phone (hand-held)&quot;)
+  
+  ## mapping for conditions
+  categorize_condition &lt;- function(condition) {
+    if (grepl(&quot;Driving|Following|Passing|Inexperience|Improper|Changing|Speed|Distraction|Alcohol|Drugs|Phone|Eating|Fatigued|Sleeping|Pedestrian|Failure to Yield|Backing|Oversized&quot;, condition, ignore.case = TRUE)) {
+      return(&quot;Human Error&quot;)
+    } else if (grepl(&quot;Brakes|Steering|Tire|Headlights|Accelerator|Windshield|Tow Hitch|Defective|Failure&quot;, condition, ignore.case = TRUE)) {
+      return(&quot;Mechanical Error&quot;)
+    } else if (grepl(&quot;Pavement|Glare|Obstruction|Weather|Animals|View|Control|Shoulders&quot;, condition, ignore.case = TRUE)) {
+      return(&quot;Environmental Conditions&quot;)
+    } else if (grepl(&quot;Illness|Lost Consciousness|Physical Disability&quot;, condition, ignore.case = TRUE)) {
+      return(&quot;Medical Condition&quot;)
+    } else if (condition == &quot;&quot; || grepl(&quot;Unspecified|Other&quot;, condition, ignore.case = TRUE)) {
+      return(&quot;Other/Unspecified&quot;)
+    } else {
+      return(&quot;Other/Unspecified&quot;)
+    }
+  }
+  
+  vehicles_df &lt;- vehicles_df %&gt;%
+    mutate(CRASH.DATE = as.Date(CRASH.DATE, format = &quot;%m/%d/%Y&quot;)) %&gt;%  # Convert CRASH.DATE to Date format
+    select(-all_of(columns_to_remove)) %&gt;%
+    filter(CRASH.DATE &gt;= min_cutoff_date) %&gt;%
+    filter(CRASH.DATE &lt; max_cutoff_date) %&gt;%
+    filter(!is.na(LATITUDE) &amp; !is.na(LONGITUDE)) %&gt;%
+    filter(!is.na(CRASH.TIME)) %&gt;%
+    ##create new column with broader category for accident
+    mutate(Category = sapply(CONTRIBUTING.FACTOR.VEHICLE.1, categorize_condition)) %&gt;%
+    # Combine date and time into one string
+    mutate(CRASH.DATETIME = as.POSIXct(paste(CRASH.DATE, CRASH.TIME), format = &quot;%Y-%m-%d %H:%M&quot;)) %&gt;%
+    # Round down to the current hour
+    mutate(CRASH.DATETIME = floor_date(CRASH.DATETIME, &quot;hour&quot;)) %&gt;%
+    # enriching datetime format to weekdays, month, quarter, year
+    mutate(
+      Weekday = wday(CRASH.DATETIME, label = TRUE, abbr = FALSE), 
+      Month = month(CRASH.DATETIME, label = TRUE, abbr = FALSE),  
+      Quarter = quarter(CRASH.DATETIME),                          
+      Year = year(CRASH.DATETIME) ,
+      Day = day(CRASH.DATETIME),
+      Hour = hour(CRASH.DATETIME),  
+      TimeOfDay = case_when(                      
+        Hour &gt;= 6 &amp; Hour &lt; 12  ~ &quot;Morning&quot;,
+        Hour &gt;= 12 &amp; Hour &lt; 17 ~ &quot;Afternoon&quot;,
+        Hour &gt;= 17 &amp; Hour &lt; 21 ~ &quot;Evening&quot;,
+        Hour &gt;= 21 ~ &quot;Night&quot;,
+        Hour &lt; 6 ~ &quot;Night&quot;,
+        TRUE ~ &quot;Unknown&quot;,
+      )
+    ) %&gt;%
+    filter(!is.na(CRASH.TIME)) %&gt;%
+    mutate(IS.DEADLY.ACCIDENT = (NUMBER.OF.PERSONS.KILLED + NUMBER.OF.PEDESTRIANS.KILLED + NUMBER.OF.CYCLIST.KILLED + NUMBER.OF.MOTORIST.KILLED) &gt; 0,
+           IS.INJURED.ACCIDENT = (NUMBER.OF.PERSONS.INJURED + NUMBER.OF.PEDESTRIANS.INJURED + NUMBER.OF.CYCLIST.INJURED + NUMBER.OF.MOTORIST.INJURED) &gt; 0)
+  
+  # WEATHER DF - CLEANING
+  weather_df &lt;- read_excel(&quot;data/weather.xlsx&quot;)
+  weather_df &lt;- weather_df %&gt;%
+    rename(&quot;temperature_celsius&quot; = &quot;temperature_2m (Â°C)&quot;, &quot;winddirection_10m_degrees&quot; = &quot;winddirection_10m (Â°)&quot;) %&gt;%
+    mutate(time = as.POSIXct(time, format = &quot;%Y-%m-%dT%H:%M&quot;)) %&gt;% # Convert the TIME column to correct format
+    filter(!is.na(time)) %&gt;% #filter rows where there is no time 
+    filter(rowSums(is.na(.)) / ncol(weather_df) &lt; 0.8) # Filter rows where 80% or more columns are NaN/Na</code></pre>
+</div>
+<div id="merging-dataframes" class="section level3">
+<h3>Merging Dataframes</h3>
+<pre class="r"><code># MERGING DATAFRAMES
+merged_df &lt;- left_join(vehicles_df, weather_df, by = c(&quot;CRASH.DATETIME&quot; = &quot;time&quot;))
+
+write.csv(merged_df,&quot;merged_all_years.csv&quot;)
+
+split_datasets &lt;- split(merged_df, merged_df$Year)
+
+# Save each year to a separate file
+lapply(names(split_datasets), function(year) {
+  filename &lt;- paste0(&quot;merged_data_&quot;, year, &quot;.csv&quot;)
+  write.csv(split_datasets[[year]], file = filename, row.names = FALSE)
+})</code></pre>
+</div>
 <div id="total-accidents-in-new-york" class="section level3">
 <h3>Total Accidents in New York</h3>
 <pre class="r"><code># Loading necessary libraries
@@ -1673,8 +1814,8 @@ ggplot(yearly_accidents, aes(x = Year, y = Total_Accidents, fill = Year)) +
 #install.packages(&quot;plotly&quot;)
 library(esquisse)
 library(plotly)
-#esquisse::esquisser(data)
-esquisser(data)</code></pre>
+
+esquisser(data) # Opens the web app in the Viewer pane or in the browser with the data loaded</code></pre>
 </div>
 
 
