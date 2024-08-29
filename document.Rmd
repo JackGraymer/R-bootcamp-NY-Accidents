@@ -6,19 +6,42 @@ output:
   html_document:
     toc: true
     df_print: paged
+    theme: simplex
 
 ---
 
 ## Road accidents in New York
 ```{r setup, include=FALSE}
 # Global options
-knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = FALSE)
 ```
+
+This analysis aims to provide some insight about the car crashes in New York during the period of 2016 to 2022, focusing on some key factors such as vehicle type, hour and weather.
+
+## Files
+We count with 2 datasets, one cointaining the vehicle crashes and the second one about the weather of the location.
+
+| Name                       | Rows     | Columns | Each row is a                          | Link                                                                                      |
+|----------------------------|----------|---------|----------------------------------------|-------------------------------------------------------------------------------------------|
+| **Vehicles dataset**       | 2.11M    | 29      | Motor Vehicle Collision                | [Vehicles dataset](https://data.cityofnewyork.us/Public-Safety/Motor-Vehicle-Collisions-Crashes/h9gi-nx95/data_preview) |
+| **Weather dataset**        | 59,760   | 10      | Time stamp of Weather                  | [Weather dataset](https://www.kaggle.com/datasets/aadimator/nyc-weather-2016-to-2022?resource=download)                   |
+
 
 ## Data Preparation
 
-### Packages
-```{r Packages}
+In this step we will collect the data from the datasets, clean it and merge it to create a comprehensive dataset for analysis. 
+Before merging, the data needs to be cleaned and enriched with additional information. Also shrinking the data to make it more manageable.
+
+### Data Cleaning
+
+The data cleaning process involves removing columns with high NA ratios, filtering out rows with missing values, and creating new columns to categorize the main causes of accidents. The data is then enriched with additional information such as the day of the week, month, quarter, year, and time of day.
+
+Both datasets, specially `vehicles.csv`, contain a lot of rows which require a lot of memory and time to process. For this reason, we decide to eliminate rows with missing values and columns with high NA ratios, such as vehicle type 3, 4 and 5 as there are very few values in these columns (multiple vehicle accidents).
+
+`Weather.xlsx` is a smaller dataset and the cleaning process is simpler, we just need to convert the time column to a correct format and rename some columns for better understanding.
+Finally the data is then merged with the weather data to create a comprehensive dataset for analysis.
+
+```{r Data Cleaning, eval=FALSE}
 ## packages
 
 #install.packages("lubridate")
@@ -29,10 +52,7 @@ library(dplyr)
 
 #install.packages("readxl")
 library(readxl)
-```
 
-### Data Cleaning
-```{r Data Cleaning, eval=FALSE}
   # VEHICLES DF - CLEANING
   vehicles_df <- read.csv("data/vehicles.csv", header=TRUE)
   
@@ -136,6 +156,11 @@ library(readxl)
 ```
 
 ### Merging Dataframes
+
+At this point we have two clean datasets, one with the vehicle crashes and the other with the weather data. 
+Vehicle crashes are reduced considerably in size to about half the rows.
+We will merge them into a single dataset to perform the analysis.
+
 ```{r Merging Dataframes, eval=FALSE}
 # MERGING DATAFRAMES
 merged_df <- left_join(vehicles_df, weather_df, by = c("CRASH.DATETIME" = "time"))
@@ -143,7 +168,22 @@ merged_df <- left_join(vehicles_df, weather_df, by = c("CRASH.DATETIME" = "time"
 write.csv(merged_df,"data/merged_all_years.csv")
 
 split_datasets <- split(merged_df, merged_df$Year)
+```
 
+The result is:
+```{r Merged Dataframe Size, eval=FALSE}
+merged_df <- read.csv("data/merged_all_years.csv", header = TRUE)
+str(merged_df)
+```
+
+| Name            | Rows     | Columns | Each row is a                          |
+|-----------------|----------|---------|----------------------------------------|
+| **Merged dataset** | 1M | 40      | Combination of vehicle and weather data |
+
+After merging the data, we will save each year to a separate file to make it easier to analyze the data by year. 
+We will perform both analyses on the full dataset and on years separately.
+
+```{r Save Data by Year, eval=FALSE}
 # Save each year to a separate file
 lapply(names(split_datasets), function(year) {
   filename <- paste0("data/merged_data_", year, ".csv")
@@ -151,6 +191,10 @@ lapply(names(split_datasets), function(year) {
 })
 
 ```
+
+## Analysis
+# admonition
+
 
 ### Total Accidents in New York
 ```{r total_accidents}
@@ -178,6 +222,12 @@ ggplot(yearly_accidents, aes(x = Year, y = Total_Accidents, fill = Year)) +
 
 ```
 
+In this graph we can see the total number of accidents per year in New York from 2016 to 2022. 
+The number of accidents seems to be decreasing over the years, which is a positive trend.
+
+It is important to note that we cannot draw any conclusions from this graph alone, as there may be other factors influencing the number of accidents, such as the pandemic of COVID-19 and the lockdowns that occurred in 2020 and 2021, which could have reduced the number vehicles on the road and therefore the number of accidents.
+
+### Correlation between Total Accidents and Total Rainfall per Month
 ```{r Correlation}
 # Load necessary libraries
 library(ggplot2)
@@ -245,6 +295,10 @@ ggplot(correlation_data, aes(x = Total_Rainfall, y = Total_Accidents)) +
   scale_color_discrete(name = "Month")
 
 ```
+
+This graph shows the correlation between the total number of accidents and the total rainfall per month in New York in 2021. The result of `0.59` indicates a moderate positive correlation between the two variables, suggesting that higher rainfall may lead to more accidents.
+
+### Monthly Accidents and Rainfall
 
 ```{r Monthly Accidents and Rainfall}
 # Load necessary libraries
@@ -316,93 +370,13 @@ ggplot() +
   theme_minimal() +
   theme(legend.position = "right")
 ```
-```{r Shiny}
-# Load necessary libraries
-library(shiny)
-library(ggplot2)
-library(dplyr)
-library(lubridate)
 
-# Load the data
-accident_data <- read.csv("data/merged_data_2021.csv", header = TRUE)
-accident_data$CRASH.DATE <- as.Date(accident_data$CRASH.DATE)
-min_date <- min(accident_data$CRASH.DATE, na.rm = TRUE)
-max_date <- max(accident_data$CRASH.DATE, na.rm = TRUE)
+This graph shows the monthly number of accidents in New York in 2021, categorized by rainfall intensity.
+The black line represents the total number of accidents per month, while the blue bars represent the total rainfall per month on a secondary y-axis. The dots represent the number of accidents in each rainfall category. 
 
-# Define UI for the Shiny app
-ui <- fluidPage(
-  titlePanel("Accident Data Filter"),
-  sidebarLayout(
-    sidebarPanel(
-      dateRangeInput("date_range", "Select Date Range:",
-                     start = min_date,
-                     end = max_date,
-                     min = min_date,
-                     max = max_date),
-      selectInput("weekday", "Select Weekday(s):", 
-                  choices = unique(accident_data$Weekday),
-                  selected = c("Monday", "Wednesday", "Friday"),
-                  multiple = TRUE),
-      checkboxInput("is_deadly", "Accidents with Death(s)", value = FALSE),
-      checkboxInput("is_injured", "Accidents with injured people", value = FALSE),
-      actionButton("filter", "Apply Filters")
-    ),
-    
-    mainPanel(
-      plotOutput("accident_plot")
-    )
-  )
-)
-# Define server logic for the Shiny app
-server <- function(input, output) {
-  
-  filtered_data <- reactive({
-    data <- accident_data
-    
-    # Extract start and end dates from the input
-    start_date <- input$date_range[1]
-    end_date <- input$date_range[2]
-    
-    # Filter by the date range
-    data <- data %>% filter(CRASH.DATE >= start_date & CRASH.DATE <= end_date)
-    
-    # Filter by weekdays
-    data <- data %>% filter(Weekday %in% input$weekday)
-    
-    # Filter by deadly accidents
-    if (input$is_deadly) {
-      data <- data %>% filter(IS.DEADLY.ACCIDENT == TRUE)
-    }
-    
-    # Filter by injured accidents
-    if (input$is_injured) {
-      data <- data %>% filter(IS.INJURED.ACCIDENT == TRUE)
-    }
-    
-    return(data)
-  })
-  
-  output$accident_plot <- renderPlot({
-    data <- filtered_data()
-    
-    # Summarize the data to get the count of accidents per weekday
-    data_summary <- data %>% 
-      group_by(Weekday) %>% 
-      summarise(Number_of_Accidents = n())
-    
-    # Plot the number of accidents by weekday
-    ggplot(data_summary, aes(x = Weekday, y = Number_of_Accidents, fill = Weekday)) +
-      geom_bar(stat = "identity") +
-      labs(title = "Number of Accidents by Weekday",
-           x = "Weekday",
-           y = "Number of Accidents") +
-      theme_minimal()
-  })
-}
+It can be appreciated that the number of accidents tends to increase with higher rainfall, especially in the "1 mm - 4 mm (Light rain)" and ">4 mm - 7 mm (Moderate rain)" categories.
 
-# Run the application 
-shinyApp(ui = ui, server = server)
-```
+At the same time, the majority of accidents occur in no rain conditions, which could be due simply to the fact that most of the time there is no rain in New York. Hence, ithout the a total amount of vehicles on the road, it is difficult to draw conclusions from this data alone.
 
 ```{r Accidents with Injuries or Deaths}
 # Load necessary libraries
@@ -454,10 +428,26 @@ title(main = "Accidents with Injuries or Deaths per Weekday")
 ```
 
 ## Chapter of Choice (Esquisse (Web Server App))
+### If you like Tableau, you will love Esquisse
+
+Esquisse is a package that allows you to create interactive plots and dashboards in R. 
+It is similar to Tableau in that it provides a user-friendly interface for creating visualizations without writing code.
+
+To use Esquisse, you need to install the package and then load it in your R script. 
+After loading the package, you can launch the web app by calling the `esquisser()` function with your data as an argument.
+That will open a web browser with the Esquisse interface, where you can create plots interactively by dragging and dropping variables.
+Esquisse works with the `plotly` package to create interactive plots.
 
 ```{r Esquisse, eval=FALSE }
 library(esquisse)
 library(plotly)
-
+options(shiny.maxRequestSize=30*1024^2) # Increase the maximum request size for Shiny apps
 esquisser(data) # Opens the web app in the Viewer pane or in the browser with the data loaded
 ```
+
+![Esquisse](resources\esquisse.png)
+
+At the botom left of the pane, in the options tab, you can select to make the plots with `plotly` to make them interactive.
+Once active, you can hover over the plots to see the data points and values or click on the legend to filter the data.
+
+![Esquisse Options](resources\esquisse_plotly.png)
