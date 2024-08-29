@@ -42,21 +42,15 @@ Both datasets, specially `vehicles.csv`, contain a lot of rows which require a l
 Finally the data is then merged with the weather data to create a comprehensive dataset for analysis.
 
 ```{r Data Cleaning, eval=FALSE}
-## packages
-
-#install.packages("lubridate")
-library(lubridate) # used to round to the next hour
-
-#install.packages("dplyr")
-library(dplyr)
-
-#install.packages("readxl")
-library(readxl)
-
+  ## packages
+  library(lubridate) # used to round to the next hour
+  library(dplyr)
+  library(readxl)
+  
   # VEHICLES DF - CLEANING
   vehicles_df <- read.csv("data/vehicles.csv", header=TRUE)
   
-  ## columns to be removed due to high NA ratio.
+  ## columns to be removed due to high NaN ratio.
   columns_to_remove <- c(
     "CROSS.STREET.NAME",
     "ON.STREET.NAME",
@@ -69,7 +63,7 @@ library(readxl)
     "VEHICLE.TYPE.CODE.5",
     "COLLISION_ID"
   )
-  ## Cutoff dates to discard NA values
+  
   min_cutoff_date <- as.Date("2016-01-01")
   max_cutoff_date <- as.Date("2022-01-01")
   
@@ -118,6 +112,7 @@ library(readxl)
     filter(CRASH.DATE >= min_cutoff_date) %>%
     filter(CRASH.DATE < max_cutoff_date) %>%
     filter(!is.na(LATITUDE) & !is.na(LONGITUDE)) %>%
+    filter(LATITUDE != 0 | LONGITUDE != 0) %>%
     filter(!is.na(CRASH.TIME)) %>%
     ##create new column with broader category for accident
     mutate(Category = sapply(CONTRIBUTING.FACTOR.VEHICLE.1, categorize_condition)) %>%
@@ -136,9 +131,9 @@ library(readxl)
       TimeOfDay = case_when(                      
         Hour >= 6 & Hour < 12  ~ "Morning",
         Hour >= 12 & Hour < 17 ~ "Afternoon",
-        Hour >= 17 & Hour < 21 ~ "Evening",
-        Hour >= 21 ~ "Night",
-        Hour < 6 ~ "Night",
+        Hour >= 17 & Hour < 20 ~ "Late Afternoon",
+        Hour >= 20 ~ "Night",
+        Hour < 6 ~ "Early Morning",
         TRUE ~ "Unknown",
       )
     ) %>%
@@ -153,21 +148,21 @@ library(readxl)
     mutate(time = as.POSIXct(time, format = "%Y-%m-%dT%H:%M")) %>% # Convert the TIME column to correct format
     filter(!is.na(time)) %>% #filter rows where there is no time 
     filter(rowSums(is.na(.)) / ncol(weather_df) < 0.8) # Filter rows where 80% or more columns are NaN/Na
-```
+  
+  # MERGING DATAFRAMES
+  merged_df <- left_join(vehicles_df, weather_df, by = c("CRASH.DATETIME" = "time"))
+  
+  write.csv(merged_df,"merged_all_years.csv")
+  
+  split_datasets <- split(merged_df, merged_df$Year)
+  
+  # Save each year to a separate file
+  lapply(names(split_datasets), function(year) {
+    filename <- paste0("merged_data_", year, ".csv")
+    write.csv(split_datasets[[year]], file = filename, row.names = FALSE)
+  })
 
-### Merging Dataframes
 
-At this point we have two clean datasets, one with the vehicle crashes and the other with the weather data. 
-Vehicle crashes are reduced considerably in size to about half the rows.
-We will merge them into a single dataset to perform the analysis.
-
-```{r Merging Dataframes, eval=FALSE}
-# MERGING DATAFRAMES
-merged_df <- left_join(vehicles_df, weather_df, by = c("CRASH.DATETIME" = "time"))
-
-write.csv(merged_df,"data/merged_all_years.csv")
-
-split_datasets <- split(merged_df, merged_df$Year)
 ```
 
 The result is:
@@ -375,6 +370,148 @@ The black line represents the total number of accidents per month, while the blu
 It can be appreciated that the number of accidents tends to increase with higher rainfall, especially in the "1 mm - 4 mm (Light rain)" and ">4 mm - 7 mm (Moderate rain)" categories.
 
 At the same time, the majority of accidents occur in no rain conditions, which could be due simply to the fact that most of the time there is no rain in New York. Hence, ithout the a total amount of vehicles on the road, it is difficult to draw conclusions from this data alone.
+
+```{r Accidents with Injuries or Deaths}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(fmsb)  # For radar chart
+
+# Load your accident data
+accident_data <- read.csv("data/merged_data_2021.csv")
+
+# Filter for accidents with injuries
+injured_accidents <- accident_data %>%
+  filter(IS.INJURED.ACCIDENT == TRUE) %>%
+  group_by(Weekday) %>%
+  summarise(Accidents = n())
+
+# Filter for accidents with deaths
+deadly_accidents <- accident_data %>%
+  filter(IS.DEADLY.ACCIDENT == TRUE) %>%
+  group_by(Weekday) %>%
+  summarise(Accidents = n())
+
+# Filter for accidents with no injuries or deaths
+no_injury_or_death_accidents <- accident_data %>%
+  filter(IS.INJURED.ACCIDENT == FALSE & IS.DEADLY.ACCIDENT == FALSE) %>%
+  group_by(Weekday) %>%
+  summarise(Accidents = n())
+
+# Ensure the weekday order is correct (Monday to Sunday)
+injured_accidents$Weekday <- factor(injured_accidents$Weekday, 
+                                    levels = c("Monday", "Tuesday", "Wednesday", 
+                                               "Thursday", "Friday", "Saturday", "Sunday"))
+
+deadly_accidents$Weekday <- factor(deadly_accidents$Weekday, 
+                                   levels = c("Monday", "Tuesday", "Wednesday", 
+                                              "Thursday", "Friday", "Saturday", "Sunday"))
+
+no_injury_or_death_accidents$Weekday <- factor(no_injury_or_death_accidents$Weekday, 
+                                               levels = c("Monday", "Tuesday", "Wednesday", 
+                                                          "Thursday", "Friday", "Saturday", "Sunday"))
+
+# Apply log transformation
+injured_accidents$LogAccidents <- log1p(injured_accidents$Accidents)
+deadly_accidents$LogAccidents <- log1p(deadly_accidents$Accidents)
+no_injury_or_death_accidents$LogAccidents <- log1p(no_injury_or_death_accidents$Accidents)
+
+# Reorder the data frame based on the correct weekday order
+injured_accidents <- injured_accidents %>%
+  arrange(Weekday)
+
+deadly_accidents <- deadly_accidents %>%
+  arrange(Weekday)
+
+no_injury_or_death_accidents <- no_injury_or_death_accidents %>%
+  arrange(Weekday)
+
+# Prepare data for the radar chart (Injured)
+radar_data_injured <- as.data.frame(t(injured_accidents$LogAccidents))
+colnames(radar_data_injured) <- injured_accidents$Weekday
+radar_data_injured <- rbind(rep(max(injured_accidents$LogAccidents), 7), # Maximum value for scaling
+                            rep(min(injured_accidents$LogAccidents), 7), # Minimum value for scaling
+                            radar_data_injured)
+
+# Prepare data for the radar chart (Deadly)
+radar_data_deadly <- as.data.frame(t(deadly_accidents$LogAccidents))
+colnames(radar_data_deadly) <- deadly_accidents$Weekday
+radar_data_deadly <- rbind(rep(max(deadly_accidents$LogAccidents), 7), # Maximum value for scaling
+                           rep(min(deadly_accidents$LogAccidents), 7), # Minimum value for scaling
+                           radar_data_deadly)
+
+# Prepare data for the radar chart (No Injuries or Deaths)
+radar_data_no_injury_or_death <- as.data.frame(t(no_injury_or_death_accidents$LogAccidents))
+colnames(radar_data_no_injury_or_death) <- no_injury_or_death_accidents$Weekday
+radar_data_no_injury_or_death <- rbind(rep(max(no_injury_or_death_accidents$LogAccidents), 7), # Maximum value for scaling
+                                       rep(min(no_injury_or_death_accidents$LogAccidents), 7), # Minimum value for scaling
+                                       radar_data_no_injury_or_death)
+
+# Set up the plotting area to display three plots side by side
+par(mfrow = c(1, 3))  # Set up a 1x3 plotting area
+par(oma = c(0, 0, 4, 0))  # Set outer margins to make space for the main title
+
+# Plot the radar chart for Injured Accidents
+radarchart(radar_data_injured, axistype = 1,
+           pcol = "blue", pfcol = scales::alpha("blue", 0.5), plwd = 2,
+           cglcol = "grey", cglty = 1, axislabcol = "transparent",
+           caxislabels = NA,  # Remove gray numbers
+           cglwd = 0.8,
+           vlcex = 0.8)
+title(main = "with Injuries")
+
+# Plot the radar chart for Deadly Accidents
+radarchart(radar_data_deadly, axistype = 1,
+           pcol = "red", pfcol = scales::alpha("red", 0.5), plwd = 2,
+           cglcol = "grey", cglty = 1, axislabcol = "transparent",
+           caxislabels = NA,  # Remove gray numbers
+           cglwd = 0.8,
+           vlcex = 0.8)
+title(main = "with Deaths")
+
+# Plot the radar chart for No Injuries or Deaths
+radarchart(radar_data_no_injury_or_death, axistype = 1,
+           pcol = "green", pfcol = scales::alpha("green", 0.5), plwd = 2,
+           cglcol = "grey", cglty = 1, axislabcol = "transparent",
+           caxislabels = NA,  # Remove gray numbers
+           cglwd = 0.8,
+           vlcex = 0.8)
+title(main = "without Injuries or Deaths")
+
+# Add a big title to the entire plot
+mtext("Accidents per Weekday", outer = TRUE, cex = 2, font = 2)
+
+```
+
+
+```{r Heatmap Deadly and Injured Accidents}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+
+# Assuming `merged_df` is your prepared data from the previous steps
+accidents_df <- read.csv("data/merged_data_2021.csv", header=TRUE)
+# Filter for the relevant days and reorder factors
+filtered_df <- accidents_df %>%
+  filter(Weekday %in% c("Thursday", "Friday", "Saturday")) %>%
+  mutate(TimeOfDay = factor(TimeOfDay, levels = c("Early Morning", "Morning", "Afternoon", "Late Afternoon", "Evening", "Night")),
+         Weekday = factor(Weekday, levels = c("Saturday", "Friday", "Thursday")))
+
+# Aggregate data by TimeOfDay and Weekday
+agg_df <- filtered_df %>%
+  group_by(Weekday, TimeOfDay) %>%
+  summarise(Accidents = n()) %>%
+  ungroup()
+
+# Plotting the data
+ggplot(agg_df, aes(x = TimeOfDay, y = Weekday, fill = Accidents)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "white", high = "red") +
+  labs(title = "Deadly and Injured Accidents by Time of Day and Weekday (Thu-Sat)",
+       x = "Time of Day", y = "Weekday (reversed order)", fill = "Number of Accidents") +
+  theme_minimal()
+
+```
 
 ## Chapter of Choice (Esquisse (Web Server App))
 ### If you like Tableau, you will love Esquisse
