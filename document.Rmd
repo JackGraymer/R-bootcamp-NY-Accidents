@@ -404,6 +404,55 @@ server <- function(input, output) {
 shinyApp(ui = ui, server = server)
 ```
 
+```{r Accidents with Injuries or Deaths}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(fmsb)  # For radar chart
+
+# Load your accident data
+accident_data <- read.csv("data/merged_data_2021.csv")
+
+# Filter for accidents with injuries or deaths
+filtered_accidents <- accident_data %>%
+  filter(IS.INJURED.ACCIDENT == TRUE | IS.DEADLY.ACCIDENT == TRUE)
+
+# Count the number of accidents per weekday
+accidents_by_weekday <- filtered_accidents %>%
+  group_by(Weekday) %>%
+  summarise(Accidents = n())
+
+# Ensure the weekday order is correct (Monday to Sunday)
+accidents_by_weekday$Weekday <- factor(accidents_by_weekday$Weekday, 
+                                       levels = c("Monday", "Tuesday", "Wednesday", 
+                                                  "Thursday", "Friday", "Saturday", "Sunday"))
+
+# Apply log transformation
+accidents_by_weekday$LogAccidents <- log1p(accidents_by_weekday$Accidents)
+
+# Reorder the data frame based on the correct weekday order
+accidents_by_weekday <- accidents_by_weekday %>%
+  arrange(Weekday)
+
+# Prepare data for the radar chart
+radar_data <- as.data.frame(t(accidents_by_weekday$LogAccidents))
+colnames(radar_data) <- accidents_by_weekday$Weekday
+radar_data <- rbind(rep(max(accidents_by_weekday$LogAccidents), 7), # Maximum value for scaling
+                    rep(min(accidents_by_weekday$LogAccidents), 7), # Minimum value for scaling
+                    radar_data)
+
+# Plot the radar chart with the correct weekday order and without gray numbers
+radarchart(radar_data, axistype = 1,
+           pcol = "red", pfcol = scales::alpha("red", 0.5), plwd = 2,
+           cglcol = "grey", cglty = 1, axislabcol = "transparent",
+           caxislabels = NA,  # Remove gray numbers
+           cglwd = 0.8,
+           vlcex = 0.8)
+
+# Add a title
+title(main = "Accidents with Injuries or Deaths per Weekday")
+```
+
 ## Chapter of Choice (Esquisse (Web Server App))
 
 ```{r Esquisse, eval=FALSE }
