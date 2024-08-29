@@ -42,21 +42,15 @@ Both datasets, specially `vehicles.csv`, contain a lot of rows which require a l
 Finally the data is then merged with the weather data to create a comprehensive dataset for analysis.
 
 ```{r Data Cleaning, eval=FALSE}
-## packages
-
-#install.packages("lubridate")
-library(lubridate) # used to round to the next hour
-
-#install.packages("dplyr")
-library(dplyr)
-
-#install.packages("readxl")
-library(readxl)
-
+  ## packages
+  library(lubridate) # used to round to the next hour
+  library(dplyr)
+  library(readxl)
+  
   # VEHICLES DF - CLEANING
   vehicles_df <- read.csv("data/vehicles.csv", header=TRUE)
   
-  ## columns to be removed due to high NA ratio.
+  ## columns to be removed due to high NaN ratio.
   columns_to_remove <- c(
     "CROSS.STREET.NAME",
     "ON.STREET.NAME",
@@ -69,7 +63,7 @@ library(readxl)
     "VEHICLE.TYPE.CODE.5",
     "COLLISION_ID"
   )
-  ## Cutoff dates to discard NA values
+  
   min_cutoff_date <- as.Date("2016-01-01")
   max_cutoff_date <- as.Date("2022-01-01")
   
@@ -118,6 +112,7 @@ library(readxl)
     filter(CRASH.DATE >= min_cutoff_date) %>%
     filter(CRASH.DATE < max_cutoff_date) %>%
     filter(!is.na(LATITUDE) & !is.na(LONGITUDE)) %>%
+    filter(LATITUDE != 0 | LONGITUDE != 0) %>%
     filter(!is.na(CRASH.TIME)) %>%
     ##create new column with broader category for accident
     mutate(Category = sapply(CONTRIBUTING.FACTOR.VEHICLE.1, categorize_condition)) %>%
@@ -136,9 +131,9 @@ library(readxl)
       TimeOfDay = case_when(                      
         Hour >= 6 & Hour < 12  ~ "Morning",
         Hour >= 12 & Hour < 17 ~ "Afternoon",
-        Hour >= 17 & Hour < 21 ~ "Evening",
-        Hour >= 21 ~ "Night",
-        Hour < 6 ~ "Night",
+        Hour >= 17 & Hour < 20 ~ "Late Afternoon",
+        Hour >= 20 ~ "Night",
+        Hour < 6 ~ "Early Morning",
         TRUE ~ "Unknown",
       )
     ) %>%
@@ -153,21 +148,21 @@ library(readxl)
     mutate(time = as.POSIXct(time, format = "%Y-%m-%dT%H:%M")) %>% # Convert the TIME column to correct format
     filter(!is.na(time)) %>% #filter rows where there is no time 
     filter(rowSums(is.na(.)) / ncol(weather_df) < 0.8) # Filter rows where 80% or more columns are NaN/Na
-```
+  
+  # MERGING DATAFRAMES
+  merged_df <- left_join(vehicles_df, weather_df, by = c("CRASH.DATETIME" = "time"))
+  
+  write.csv(merged_df,"merged_all_years.csv")
+  
+  split_datasets <- split(merged_df, merged_df$Year)
+  
+  # Save each year to a separate file
+  lapply(names(split_datasets), function(year) {
+    filename <- paste0("merged_data_", year, ".csv")
+    write.csv(split_datasets[[year]], file = filename, row.names = FALSE)
+  })
 
-### Merging Dataframes
 
-At this point we have two clean datasets, one with the vehicle crashes and the other with the weather data. 
-Vehicle crashes are reduced considerably in size to about half the rows.
-We will merge them into a single dataset to perform the analysis.
-
-```{r Merging Dataframes, eval=FALSE}
-# MERGING DATAFRAMES
-merged_df <- left_join(vehicles_df, weather_df, by = c("CRASH.DATETIME" = "time"))
-
-write.csv(merged_df,"data/merged_all_years.csv")
-
-split_datasets <- split(merged_df, merged_df$Year)
 ```
 
 The result is:
@@ -425,6 +420,36 @@ radarchart(radar_data, axistype = 1,
 
 # Add a title
 title(main = "Accidents with Injuries or Deaths per Weekday")
+```
+
+
+```{r Heatmap Deadly and Injured Accidents}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+
+# Assuming `merged_df` is your prepared data from the previous steps
+accidents_df <- read.csv("data/merged_data_2021.csv", header=TRUE)
+# Filter for the relevant days and reorder factors
+filtered_df <- accidents_df %>%
+  filter(Weekday %in% c("Thursday", "Friday", "Saturday")) %>%
+  mutate(TimeOfDay = factor(TimeOfDay, levels = c("Early Morning", "Morning", "Afternoon", "Late Afternoon", "Evening", "Night")),
+         Weekday = factor(Weekday, levels = c("Saturday", "Friday", "Thursday")))
+
+# Aggregate data by TimeOfDay and Weekday
+agg_df <- filtered_df %>%
+  group_by(Weekday, TimeOfDay) %>%
+  summarise(Accidents = n()) %>%
+  ungroup()
+
+# Plotting the data
+ggplot(agg_df, aes(x = TimeOfDay, y = Weekday, fill = Accidents)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "white", high = "red") +
+  labs(title = "Deadly and Injured Accidents by Time of Day and Weekday (Thu-Sat)",
+       x = "Time of Day", y = "Weekday (reversed order)", fill = "Number of Accidents") +
+  theme_minimal()
+
 ```
 
 ## Chapter of Choice (Esquisse (Web Server App))

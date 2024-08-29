@@ -1,12 +1,6 @@
   ## packages
-  
-   install.packages("lubridate")
   library(lubridate) # used to round to the next hour
-  
-   install.packages("dplyr")
   library(dplyr)
-  
-   install.packages("readxl")
   library(readxl)
   
   # VEHICLES DF - CLEANING
@@ -74,6 +68,7 @@
     filter(CRASH.DATE >= min_cutoff_date) %>%
     filter(CRASH.DATE < max_cutoff_date) %>%
     filter(!is.na(LATITUDE) & !is.na(LONGITUDE)) %>%
+    filter(LATITUDE != 0 | LONGITUDE != 0) %>%
     filter(!is.na(CRASH.TIME)) %>%
     ##create new column with broader category for accident
     mutate(Category = sapply(CONTRIBUTING.FACTOR.VEHICLE.1, categorize_condition)) %>%
@@ -92,9 +87,9 @@
       TimeOfDay = case_when(                      
         Hour >= 6 & Hour < 12  ~ "Morning",
         Hour >= 12 & Hour < 17 ~ "Afternoon",
-        Hour >= 17 & Hour < 21 ~ "Evening",
-        Hour >= 21 ~ "Night",
-        Hour < 6 ~ "Night",
+        Hour >= 17 & Hour < 20 ~ "Late Afternoon",
+        Hour >= 20 ~ "Night",
+        Hour < 6 ~ "Early Morning",
         TRUE ~ "Unknown",
       )
     ) %>%
