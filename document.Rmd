@@ -382,44 +382,107 @@ library(fmsb)  # For radar chart
 # Load your accident data
 accident_data <- read.csv("data/merged_data_2021.csv")
 
-# Filter for accidents with injuries or deaths
-filtered_accidents <- accident_data %>%
-  filter(IS.INJURED.ACCIDENT == TRUE | IS.DEADLY.ACCIDENT == TRUE)
+# Filter for accidents with injuries
+injured_accidents <- accident_data %>%
+  filter(IS.INJURED.ACCIDENT == TRUE) %>%
+  group_by(Weekday) %>%
+  summarise(Accidents = n())
 
-# Count the number of accidents per weekday
-accidents_by_weekday <- filtered_accidents %>%
+# Filter for accidents with deaths
+deadly_accidents <- accident_data %>%
+  filter(IS.DEADLY.ACCIDENT == TRUE) %>%
+  group_by(Weekday) %>%
+  summarise(Accidents = n())
+
+# Filter for accidents with no injuries or deaths
+no_injury_or_death_accidents <- accident_data %>%
+  filter(IS.INJURED.ACCIDENT == FALSE & IS.DEADLY.ACCIDENT == FALSE) %>%
   group_by(Weekday) %>%
   summarise(Accidents = n())
 
 # Ensure the weekday order is correct (Monday to Sunday)
-accidents_by_weekday$Weekday <- factor(accidents_by_weekday$Weekday, 
-                                       levels = c("Monday", "Tuesday", "Wednesday", 
-                                                  "Thursday", "Friday", "Saturday", "Sunday"))
+injured_accidents$Weekday <- factor(injured_accidents$Weekday, 
+                                    levels = c("Monday", "Tuesday", "Wednesday", 
+                                               "Thursday", "Friday", "Saturday", "Sunday"))
+
+deadly_accidents$Weekday <- factor(deadly_accidents$Weekday, 
+                                   levels = c("Monday", "Tuesday", "Wednesday", 
+                                              "Thursday", "Friday", "Saturday", "Sunday"))
+
+no_injury_or_death_accidents$Weekday <- factor(no_injury_or_death_accidents$Weekday, 
+                                               levels = c("Monday", "Tuesday", "Wednesday", 
+                                                          "Thursday", "Friday", "Saturday", "Sunday"))
 
 # Apply log transformation
-accidents_by_weekday$LogAccidents <- log1p(accidents_by_weekday$Accidents)
+injured_accidents$LogAccidents <- log1p(injured_accidents$Accidents)
+deadly_accidents$LogAccidents <- log1p(deadly_accidents$Accidents)
+no_injury_or_death_accidents$LogAccidents <- log1p(no_injury_or_death_accidents$Accidents)
 
 # Reorder the data frame based on the correct weekday order
-accidents_by_weekday <- accidents_by_weekday %>%
+injured_accidents <- injured_accidents %>%
   arrange(Weekday)
 
-# Prepare data for the radar chart
-radar_data <- as.data.frame(t(accidents_by_weekday$LogAccidents))
-colnames(radar_data) <- accidents_by_weekday$Weekday
-radar_data <- rbind(rep(max(accidents_by_weekday$LogAccidents), 7), # Maximum value for scaling
-                    rep(min(accidents_by_weekday$LogAccidents), 7), # Minimum value for scaling
-                    radar_data)
+deadly_accidents <- deadly_accidents %>%
+  arrange(Weekday)
 
-# Plot the radar chart with the correct weekday order and without gray numbers
-radarchart(radar_data, axistype = 1,
+no_injury_or_death_accidents <- no_injury_or_death_accidents %>%
+  arrange(Weekday)
+
+# Prepare data for the radar chart (Injured)
+radar_data_injured <- as.data.frame(t(injured_accidents$LogAccidents))
+colnames(radar_data_injured) <- injured_accidents$Weekday
+radar_data_injured <- rbind(rep(max(injured_accidents$LogAccidents), 7), # Maximum value for scaling
+                            rep(min(injured_accidents$LogAccidents), 7), # Minimum value for scaling
+                            radar_data_injured)
+
+# Prepare data for the radar chart (Deadly)
+radar_data_deadly <- as.data.frame(t(deadly_accidents$LogAccidents))
+colnames(radar_data_deadly) <- deadly_accidents$Weekday
+radar_data_deadly <- rbind(rep(max(deadly_accidents$LogAccidents), 7), # Maximum value for scaling
+                           rep(min(deadly_accidents$LogAccidents), 7), # Minimum value for scaling
+                           radar_data_deadly)
+
+# Prepare data for the radar chart (No Injuries or Deaths)
+radar_data_no_injury_or_death <- as.data.frame(t(no_injury_or_death_accidents$LogAccidents))
+colnames(radar_data_no_injury_or_death) <- no_injury_or_death_accidents$Weekday
+radar_data_no_injury_or_death <- rbind(rep(max(no_injury_or_death_accidents$LogAccidents), 7), # Maximum value for scaling
+                                       rep(min(no_injury_or_death_accidents$LogAccidents), 7), # Minimum value for scaling
+                                       radar_data_no_injury_or_death)
+
+# Set up the plotting area to display three plots side by side
+par(mfrow = c(1, 3))  # Set up a 1x3 plotting area
+par(oma = c(0, 0, 4, 0))  # Set outer margins to make space for the main title
+
+# Plot the radar chart for Injured Accidents
+radarchart(radar_data_injured, axistype = 1,
+           pcol = "blue", pfcol = scales::alpha("blue", 0.5), plwd = 2,
+           cglcol = "grey", cglty = 1, axislabcol = "transparent",
+           caxislabels = NA,  # Remove gray numbers
+           cglwd = 0.8,
+           vlcex = 0.8)
+title(main = "with Injuries")
+
+# Plot the radar chart for Deadly Accidents
+radarchart(radar_data_deadly, axistype = 1,
            pcol = "red", pfcol = scales::alpha("red", 0.5), plwd = 2,
            cglcol = "grey", cglty = 1, axislabcol = "transparent",
            caxislabels = NA,  # Remove gray numbers
            cglwd = 0.8,
            vlcex = 0.8)
+title(main = "with Deaths")
 
-# Add a title
-title(main = "Accidents with Injuries or Deaths per Weekday")
+# Plot the radar chart for No Injuries or Deaths
+radarchart(radar_data_no_injury_or_death, axistype = 1,
+           pcol = "green", pfcol = scales::alpha("green", 0.5), plwd = 2,
+           cglcol = "grey", cglty = 1, axislabcol = "transparent",
+           caxislabels = NA,  # Remove gray numbers
+           cglwd = 0.8,
+           vlcex = 0.8)
+title(main = "without Injuries or Deaths")
+
+# Add a big title to the entire plot
+mtext("Accidents per Weekday", outer = TRUE, cex = 2, font = 2)
+
 ```
 
 
