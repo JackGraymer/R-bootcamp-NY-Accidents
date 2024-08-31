@@ -55,6 +55,12 @@ data/
 document.html
 
 # ignore .pdf
-.pdf
+*.pdf
+
+# Ignore all files starting with "document"
+document*
+
+# Do not ignore "document.Rmd"
+!document.Rmd
 
 .idea/*
