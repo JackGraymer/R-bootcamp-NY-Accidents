@@ -7,7 +7,8 @@ output:
     toc: true
     df_print: paged
     theme: simplex
-
+  pdf_document:
+    toc: true
 ---
 
 ## Road accidents in New York
@@ -188,7 +189,9 @@ lapply(names(split_datasets), function(year) {
 
 ## Analysis
 The following subsections will illustrate the insights gained by generating plots of the given datasets.
+
 ### Total Accidents in New York
+
 ```{r total_accidents}
 # Loading necessary libraries
 library(ggplot2)
@@ -716,7 +719,8 @@ shinyApp(ui = ui, server = server)
 With below shiny application, users are able to select a date range (default takes the first and last date of the loaded dataset), the weekday(s) specify whether only accidents with Death(s) and/or injured people should be included it in.
 Depending on the selection, the plots is automatically being updated giving the user a direct feedback for doing some very basic analysis of how many accidents happen on what specific weekdays given the date range.
 
-![Shiny Application](resources\shiny.pdf)
+![Shiny Application](resources\shiny.png)
+
 
 ## Interactive Map of Accidents in New York
 
@@ -757,3 +761,22 @@ fig <- fig %>%
 
 fig
 ```
+
+
+## ChatGPT with its highs and lows
+
+When we first set out on our data science project, we were excited but also a bit overwhelmed. We knew we were dealing with a complex problem—massive datasets, intricate relationships, and the need to create meaningful visualizations that could reveal the insights hidden within the data. As much as we loved diving into R and exploring the depths of data manipulation, we also knew that the journey ahead would be challenging and time-consuming. That’s when we decided to bring ChatGPT into our process.
+
+Initially, we approached ChatGPT with cautious optimism. Could an AI really help us navigate the complexities of data science? Could it generate R code that would actually work? Well, we obviously knew the answer; Yes! Whether we were stuck on which plot would best represent our data or needed help writing a tricky piece of R code, ChatGPT was there, offering suggestions that we hadn’t even thought of. It became our go-to resource, a kind of brainstorming partner that was always available and always ready with ideas.
+
+For example, when we were trying to figure out how to visualize our data, ChatGPT suggested options like heatmaps, radar charts, and density plots. Not only did it give us the idea, but it also provided the R code to create these visualizations. This saved us countless hours that we would have otherwise spent tweaking and troubleshooting code. When we encountered errors—inevitable in any data science project—ChatGPT was incredibly helpful in diagnosing the issues and suggesting fixes. It was like having a personal R consultant available at all times.
+
+However, as much as ChatGPT boosted our productivity, it also taught us an important lesson: even with AI, the human touch is irreplaceable. We quickly learned that while ChatGPT could provide code and suggest visualizations, these outputs needed to be rigorously checked. Sometimes, the code didn’t produce exactly what we wanted, or the visualization didn’t tell the story we were trying to convey. We had to step back, critically evaluate the results, and make adjustments to ensure that our analysis was accurate and meaningful.
+
+Another interesting challenge we faced was the impact of having so much information and functionality at our fingertips. Using ChatGPT made our process incredibly efficient, but it also shortened the time we usually spent brainstorming and exploring different approaches. There’s something to be said for the creative process that comes from struggling with a problem and experimenting with various solutions. With ChatGPT, we sometimes found that this creative journey was cut short, as solutions were so readily available. It was a trade-off between efficiency and the creative exploration that often leads to unexpected insights in data science.
+
+Yet, in today’s data-driven world, where the ability to quickly analyze and interpret data is crucial, using AI tools like ChatGPT has become almost essential. The efficiency gains we experienced were undeniable. We could spend less time wrestling with the syntax of R and more time focusing on the bigger picture—interpreting the data, refining our analyses, and communicating our findings. ChatGPT didn’t take away our ability to think critically or creatively; instead, it enhanced our ability to execute on those thoughts more quickly and with greater precision.
+
+Reflecting on our experience, it’s clear that using ChatGPT was like having a turbocharged assistant in our data science toolkit. It didn’t replace our skills in R or our understanding of data, but it did significantly streamline our workflow. We were able to focus more on the insights and less on the mechanics, which made our project not only faster but also richer in the insights we could uncover.
+
+In conclusion, while tools like ChatGPT are reshaping the way we approach data science, they also remind us of the importance of maintaining our critical thinking and creativity. AI can accelerate the process, but it’s still up to us to ensure that the results are accurate, meaningful, and aligned with our goals. In the end, the combination of human insight and AI-driven efficiency is what made our project a success, and it’s a balance we’ll continue to seek in future endeavors.
