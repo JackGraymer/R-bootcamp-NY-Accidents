@@ -19,7 +19,7 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = FALSE)
 This analysis aims to provide some insight about the car crashes in New York during the period of 2016 to 2022, focusing on some key factors such as vehicle type, hour and weather.
 
 ## Files
-We count with 2 datasets, one cointaining the vehicle crashes and the second one about the weather of the location.
+We count with 2 datasets, one containing the vehicle crashes and the second one about the weather of the location.
 
 | Name                       | Rows     | Columns | Each row is a                          | Link                                                                                      |
 |----------------------------|----------|---------|----------------------------------------|-------------------------------------------------------------------------------------------|
@@ -29,17 +29,16 @@ We count with 2 datasets, one cointaining the vehicle crashes and the second one
 
 ## Data Preparation
 
-In this step we will collect the data from the datasets, clean it and merge it to create a comprehensive dataset for analysis. 
-Before merging, the data needs to be cleaned and enriched with additional information. Also shrinking the data to make it more manageable.
+In this step, it is shown how the data was collected from the datasets, cleaned, and merged to create a comprehensive dataset for analysis. Before merging, the data was cleaned and enriched with additional information. Additionally, the data was shrunk to make it more manageable.
 
 ### Data Cleaning
 
 The data cleaning process involves removing columns with high NA ratios, filtering out rows with missing values, and creating new columns to categorize the main causes of accidents. The data is then enriched with additional information such as the day of the week, month, quarter, year, and time of day.
 
-Both datasets, specially `vehicles.csv`, contain a lot of rows which require a lot of memory and time to process. For this reason, we decide to eliminate rows with missing values and columns with high NA ratios, such as vehicle type 3, 4 and 5 as there are very few values in these columns (multiple vehicle accidents).
+Both datasets, specially `vehicles.csv`, contain a lot of rows which require a lot of memory and time to process. For this reason, it has been decided to eliminate rows with missing values and columns with high NA ratios, such as vehicle type 3, 4 and 5 as there are very few values in these columns (multiple vehicle accidents).
 
 `Weather.xlsx` is a smaller dataset and the cleaning process is simpler, we just need to convert the time column to a correct format and rename some columns for better understanding.
-Finally the data is then merged with the weather data to create a comprehensive dataset for analysis.
+Finally, the data is then merged with the weather data to create a comprehensive dataset for analysis.
 
 ```{r Data Cleaning, eval=FALSE}
   ## packages
@@ -188,7 +187,7 @@ lapply(names(split_datasets), function(year) {
 ```
 
 ## Analysis
-
+The following subsections will illustrate the insights gained by generating plots of the given datasets.
 ### Total Accidents in New York
 ```{r total_accidents}
 # Loading necessary libraries
@@ -214,11 +213,12 @@ ggplot(yearly_accidents, aes(x = Year, y = Total_Accidents, fill = Year)) +
        y = "Number of Accidents") + theme_minimal() + theme(legend.position = "none")
 
 ```
+As it is known, New York City is the city that never sleeps. Therefore, several thousands of people are on the road which can lead to some traffic jam and car crashes. Therefore, the first step was to have a very broad understanding of the rough numbers. For this reason, the first plot has been created to see, how many accidents there were in the last few years.
 
-In this graph we can see the total number of accidents per year in New York from 2016 to 2022. 
+So in this graph the total number of accidents per year in New York from 2016 to 2022 are shown.
 The number of accidents seems to be decreasing over the years, which is a positive trend.
 
-It is important to note that we cannot draw any conclusions from this graph alone, as there may be other factors influencing the number of accidents, such as the pandemic of COVID-19 and the lockdowns that occurred in 2020 and 2021, which could have reduced the number vehicles on the road and therefore the number of accidents.
+It is important to note that no conclusions can be drawn from this graph alone, as other factors may have influenced the number of accidents, such as the COVID-19 pandemic and the lockdowns that occurred in 2020 and 2021, which could have reduced the number of vehicles on the road and, consequently, the number of accidents.
 
 ### Correlation between Total Accidents and Total Rainfall per Month
 ```{r Correlation}
@@ -289,7 +289,7 @@ ggplot(correlation_data, aes(x = Total_Rainfall, y = Total_Accidents)) +
 
 ```
 
-This graph shows the correlation between the total number of accidents and the total rainfall per month in New York in 2021. The result of `0.59` indicates a moderate positive correlation between the two variables, suggesting that higher rainfall may lead to more accidents.
+This graph shows the correlation between the total number of accidents and the total rainfall per month in New York in 2021. The result of `0.59` indicates a moderate positive correlation between the two variables, suggesting that higher rainfall may lead to more accidents. Nevertheless, there may be multiple other factors influencing the final result such as how many cars/people are on the road, any events or other environmental exposure.
 
 ### Monthly Accidents and Rainfall
 
@@ -482,107 +482,98 @@ title(main = "without Injuries or Deaths")
 mtext("Accidents per Weekday", outer = TRUE, cex = 2, font = 2)
 
 ```
+The shown plots above shall be used as another step into a deeper analysis of when accidents are happening in New York. Therefore, the three spider-radars are all sharing some commonalities. Accidents seem to occur closer to the Weekend than at the beginning of the week, no matter whether it was a small crash without injuries or fatal crashes leading to deaths. With this information, the team decided to dig one layer deeper to find out, on what time, what type of accidents happen mostly and gain some insightful information with that.
 
-
-```{r Heatmap Deadly and Injured Accidents}
-# Load necessary libraries
+```{r Heatmap Accidents with Injuries}
 library(ggplot2)
 library(dplyr)
-
-# Assuming `merged_df` is your prepared data from the previous steps
-accidents_df <- read.csv("data/merged_data_2021.csv", header=TRUE)
-# Filter for the relevant days and reorder factors
-filtered_df <- accidents_df %>%
-  filter(Weekday %in% c("Thursday", "Friday", "Saturday")) %>%
-  mutate(TimeOfDay = factor(TimeOfDay, levels = c("Early Morning", "Morning", "Afternoon", "Late Afternoon", "Evening", "Night")),
-         Weekday = factor(Weekday, levels = c("Saturday", "Friday", "Thursday")))
-
-# Aggregate data by TimeOfDay and Weekday
-agg_df <- filtered_df %>%
-  group_by(Weekday, TimeOfDay) %>%
-  summarise(Accidents = n()) %>%
-  ungroup()
-
-# Plotting the data
-ggplot(agg_df, aes(x = TimeOfDay, y = Weekday, fill = Accidents)) +
-  geom_tile(color = "white") +
-  scale_fill_gradient(low = "white", high = "red") +
-  labs(title = "Deadly and Injured Accidents by Time of Day and Weekday (Thu-Sat)",
-       x = "Time of Day", y = "Weekday (reversed order)", fill = "Number of Accidents") +
-  theme_minimal()
-
-```
-
-```{r Stacked Heatmap}
-# Load necessary libraries
-library(ggplot2)
-library(dplyr)
-library(gridExtra)  # For arranging plots side by side
-library(grid)       # For the textGrob function
 
 # Load your accident data
 accidents_df <- read.csv("data/merged_data_2021.csv", header=TRUE)
 
 # Filter for the relevant days and reorder factors
 base_filtered_df <- accidents_df %>%
-  filter(Weekday %in% c("Thursday", "Friday", "Saturday")) %>%
-  mutate(TimeOfDay = factor(TimeOfDay, levels = c("Early Morning", "Morning", "Afternoon", "Late Afternoon", "Evening", "Night")),
-         Weekday = factor(Weekday, levels = c("Saturday", "Friday", "Thursday")))
+        filter(Weekday %in% c("Thursday", "Friday", "Saturday")) %>%
+        mutate(TimeOfDay = factor(TimeOfDay, levels = c("Early Morning", "Morning", "Afternoon", "Late Afternoon", "Evening", "Night")),
+               Weekday = factor(Weekday, levels = c("Saturday", "Friday", "Thursday")))
 
 # Filter data for accidents with injuries
 injured_filtered_df <- base_filtered_df %>%
-  filter(IS.INJURED.ACCIDENT == TRUE)
+        filter(IS.INJURED.ACCIDENT == TRUE)
+
+# Aggregate data for accidents with injuries
+agg_injured_df <- injured_filtered_df %>%
+        group_by(Weekday, TimeOfDay) %>%
+        summarise(Accidents = n()) %>%
+        ungroup()
+
+# Create the heatmap for accidents with injuries
+p1 <- ggplot(agg_injured_df, aes(x = TimeOfDay, y = Weekday, fill = Accidents)) +
+        geom_tile(color = "white") +
+        scale_fill_gradient(low = "white", high = "red") +
+        labs(title = "Accidents with Injuries", x = "Time of Day", y = "Weekday (reversed order)", fill = "Number of Accidents") +
+        theme_minimal() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
+
+# Display the plot
+print(p1)
+
+```
+```{r Heatmap Accidents with Deaths}
+library(ggplot2)
+library(dplyr)
 
 # Filter data for accidents with deaths
 deadly_filtered_df <- base_filtered_df %>%
-  filter(IS.DEADLY.ACCIDENT == TRUE)
+        filter(IS.DEADLY.ACCIDENT == TRUE)
+
+# Aggregate data for accidents with deaths
+agg_deadly_df <- deadly_filtered_df %>%
+        group_by(Weekday, TimeOfDay) %>%
+        summarise(Accidents = n()) %>%
+        ungroup()
+
+# Create the heatmap for accidents with deaths
+p2 <- ggplot(agg_deadly_df, aes(x = TimeOfDay, y = Weekday, fill = Accidents)) +
+        geom_tile(color = "white") +
+        scale_fill_gradient(low = "white", high = "red") +
+        labs(title = "Accidents with Deaths", x = "Time of Day", y = "Weekday (reversed order)", fill = "Number of Accidents") +
+        theme_minimal() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
+
+# Display the plot
+print(p2)
+
+```
+```{r Heatmap Accidents without Injuries or Deaths}
+library(ggplot2)
+library(dplyr)
 
 # Filter data for accidents with no injuries or deaths
 no_injury_or_death_filtered_df <- base_filtered_df %>%
-  filter(IS.INJURED.ACCIDENT == FALSE & IS.DEADLY.ACCIDENT == FALSE)
+        filter(IS.INJURED.ACCIDENT == FALSE & IS.DEADLY.ACCIDENT == FALSE)
 
-# Aggregate data for each type of accidents
-agg_injured_df <- injured_filtered_df %>%
-  group_by(Weekday, TimeOfDay) %>%
-  summarise(Accidents = n()) %>%
-  ungroup()
-
-agg_deadly_df <- deadly_filtered_df %>%
-  group_by(Weekday, TimeOfDay) %>%
-  summarise(Accidents = n()) %>%
-  ungroup()
-
+# Aggregate data for accidents without injuries or deaths
 agg_no_injury_or_death_df <- no_injury_or_death_filtered_df %>%
-  group_by(Weekday, TimeOfDay) %>%
-  summarise(Accidents = n()) %>%
-  ungroup()
+        group_by(Weekday, TimeOfDay) %>%
+        summarise(Accidents = n()) %>%
+        ungroup()
 
-# Function to create heatmap plot
-create_heatmap_plot <- function(data, title_text) {
-  ggplot(data, aes(x = TimeOfDay, y = Weekday, fill = Accidents)) +
-    geom_tile(color = "white") +
-    scale_fill_gradient(low = "white", high = "red") +
-    labs(title = title_text, x = "Time of Day", y = "Weekday (reversed order)", fill = "Number of Accidents") +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
-}
+# Create the heatmap for accidents without injuries or deaths
+p3 <- ggplot(agg_no_injury_or_death_df, aes(x = TimeOfDay, y = Weekday, fill = Accidents)) +
+        geom_tile(color = "white") +
+        scale_fill_gradient(low = "white", high = "red") +
+        labs(title = "Accidents without Injuries or Deaths", x = "Time of Day", y = "Weekday (reversed order)", fill = "Number of Accidents") +
+        theme_minimal() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
 
-# Create heatmaps for each accident type
-p1 <- create_heatmap_plot(agg_injured_df, "with Injuries")
-p2 <- create_heatmap_plot(agg_deadly_df, "with Deaths")
-p3 <- create_heatmap_plot(agg_no_injury_or_death_df, "without Injuries or Deaths")
+# Display the plot
+print(p3)
 
-# Arrange the three plots vertically and add a main title
-grid.arrange(
-  p1, p2, p3,
-  nrow = 3,
-  top = textGrob("Accidents per Weekday by Time of Day", gp = gpar(fontsize = 20, font = 2)),
-  heights = c(1, 1, 1) * 2,
-  layout_matrix = rbind(c(1), c(2), c(3)),
-  padding = unit(2, "line"),
-  as.table = TRUE
-)
 ```
+
+As mentioned in previous plot, with the knowledge acquired, the team decided to focus now on the Time of day, where accidents occurred in 2021. So the given plot clearly indicates that during Rush Hour (5pm to 8pm) most accidents occur. This may be simply due to the fact, that this is the time, when most people are actually on the road as either pedestrian, biker, or car-driver.
+
 
 ## Chapter of Choice (Esquisse (Web Server App))
 ### If you like Tableau, you will love Esquisse
