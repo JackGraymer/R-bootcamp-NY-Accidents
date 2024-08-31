@@ -515,6 +515,77 @@ ggplot(agg_df, aes(x = TimeOfDay, y = Weekday, fill = Accidents)) +
 
 ```
 
+```{r Stacked Heatmap}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(gridExtra)  # For arranging plots side by side
+library(grid)       # For the textGrob function
+
+# Load your accident data
+accidents_df <- read.csv("data/merged_data_2021.csv", header=TRUE)
+
+# Filter for the relevant days and reorder factors
+base_filtered_df <- accidents_df %>%
+  filter(Weekday %in% c("Thursday", "Friday", "Saturday")) %>%
+  mutate(TimeOfDay = factor(TimeOfDay, levels = c("Early Morning", "Morning", "Afternoon", "Late Afternoon", "Evening", "Night")),
+         Weekday = factor(Weekday, levels = c("Saturday", "Friday", "Thursday")))
+
+# Filter data for accidents with injuries
+injured_filtered_df <- base_filtered_df %>%
+  filter(IS.INJURED.ACCIDENT == TRUE)
+
+# Filter data for accidents with deaths
+deadly_filtered_df <- base_filtered_df %>%
+  filter(IS.DEADLY.ACCIDENT == TRUE)
+
+# Filter data for accidents with no injuries or deaths
+no_injury_or_death_filtered_df <- base_filtered_df %>%
+  filter(IS.INJURED.ACCIDENT == FALSE & IS.DEADLY.ACCIDENT == FALSE)
+
+# Aggregate data for each type of accidents
+agg_injured_df <- injured_filtered_df %>%
+  group_by(Weekday, TimeOfDay) %>%
+  summarise(Accidents = n()) %>%
+  ungroup()
+
+agg_deadly_df <- deadly_filtered_df %>%
+  group_by(Weekday, TimeOfDay) %>%
+  summarise(Accidents = n()) %>%
+  ungroup()
+
+agg_no_injury_or_death_df <- no_injury_or_death_filtered_df %>%
+  group_by(Weekday, TimeOfDay) %>%
+  summarise(Accidents = n()) %>%
+  ungroup()
+
+# Function to create heatmap plot
+create_heatmap_plot <- function(data, title_text) {
+  ggplot(data, aes(x = TimeOfDay, y = Weekday, fill = Accidents)) +
+    geom_tile(color = "white") +
+    scale_fill_gradient(low = "white", high = "red") +
+    labs(title = title_text, x = "Time of Day", y = "Weekday (reversed order)", fill = "Number of Accidents") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
+}
+
+# Create heatmaps for each accident type
+p1 <- create_heatmap_plot(agg_injured_df, "with Injuries")
+p2 <- create_heatmap_plot(agg_deadly_df, "with Deaths")
+p3 <- create_heatmap_plot(agg_no_injury_or_death_df, "without Injuries or Deaths")
+
+# Arrange the three plots vertically and add a main title
+grid.arrange(
+  p1, p2, p3,
+  nrow = 3,
+  top = textGrob("Accidents per Weekday by Time of Day", gp = gpar(fontsize = 20, font = 2)),
+  heights = c(1, 1, 1) * 2,
+  layout_matrix = rbind(c(1), c(2), c(3)),
+  padding = unit(2, "line"),
+  as.table = TRUE
+)
+```
+
 ## Chapter of Choice (Esquisse (Web Server App))
 ### If you like Tableau, you will love Esquisse
 
