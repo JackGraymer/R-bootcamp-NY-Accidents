@@ -1,13 +1,15 @@
 ---
 title: "Road accidents in New York"
 author: "Luca Renz & Alvaro Cervan"
-date: "30/08/2024"
+date: "r Sys.Date()"
 output:
   html_document:
-    toc: true
+    toc: yes
+    toc_float:
+      collapsed: true
     df_print: paged
-    theme: simplex
-
+    theme: cosmo
+    highlight: tango
 ---
 
 ## Road accidents in New York
@@ -21,11 +23,10 @@ This analysis aims to provide some insight about the car crashes in New York dur
 ## Files
 We count with 2 datasets, one cointaining the vehicle crashes and the second one about the weather of the location.
 
-| Name                       | Rows     | Columns | Each row is a                          | Link                                                                                      |
-|----------------------------|----------|---------|----------------------------------------|-------------------------------------------------------------------------------------------|
+| Name     | Rows     | Columns | Each row is a    | Link                                                                                      |
+|:------:|:----:|:---:|:--------:|:----:|
 | **Vehicles dataset**       | 2.11M    | 29      | Motor Vehicle Collision                | [Vehicles dataset](https://data.cityofnewyork.us/Public-Safety/Motor-Vehicle-Collisions-Crashes/h9gi-nx95/data_preview) |
-| **Weather dataset**        | 59,760   | 10      | Time stamp of Weather                  | [Weather dataset](https://www.kaggle.com/datasets/aadimator/nyc-weather-2016-to-2022?resource=download)                   |
-
+| **Weather dataset**        | 59,760   | 10      | Time stamp of Weather                  | [Weather dataset](https://www.kaggle.com/datasets/aadimator/nyc-weather-2016-to-2022?resource=download)                |
 
 ## Data Preparation
 
@@ -172,7 +173,7 @@ str(merged_df)
 ```
 
 | Name            | Rows     | Columns | Each row is a                          |
-|-----------------|----------|---------|----------------------------------------|
+|:-------:|:-----:|:----:|:------:|
 | **Merged dataset** | 1M | 40      | Combination of vehicle and weather data |
 
 After merging the data, we will save each year to a separate file to make it easier to analyze the data by year. 
@@ -371,6 +372,73 @@ It can be appreciated that the number of accidents tends to increase with higher
 
 At the same time, the majority of accidents occur in no rain conditions, which could be due simply to the fact that most of the time there is no rain in New York. Hence, ithout the a total amount of vehicles on the road, it is difficult to draw conclusions from this data alone.
 
+## Accidents by Time
+
+Here the goal is to analyze the distribution of accidents by hour, day of the week, and month.
+
+Hopefully, this analysis will provide insights into the temporal patterns of accidents in New York, helping to identify high-risk and safer periods.
+
+```{r Processing v2, echo=FALSE}
+# Load necessary libraries
+library(tidyverse)
+library(lubridate)
+library(sf)
+library(leaflet)
+library(leaflet.extras)
+library(scales)
+library(treemapify)
+library(corrplot)
+
+accidents <- read.csv("data/merged_data_2021.csv")
+
+# Data Preprocessing
+accidents <- accidents %>%
+  mutate(
+    CRASH.DATETIME = ymd_hms(CRASH.DATETIME),
+    Year = year(CRASH.DATETIME),
+    Month = factor(month(CRASH.DATETIME), levels = 1:12, 
+                   labels = month.abb, ordered = TRUE),
+    Day = day(CRASH.DATETIME),
+    Hour = hour(CRASH.DATETIME),
+    Weekday = factor(wday(CRASH.DATETIME, week_start = 1), levels = 1:7, 
+                     labels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"), ordered = TRUE)
+  ) %>%
+  filter(LATITUDE != 0 & LONGITUDE != 0) %>%  # Remove lat/long = 0
+  filter(BOROUGH != "" & !is.na(BOROUGH) & trimws(BOROUGH) != "")  # Remove empty or space-only BOROUGH entries
+```
+
+
+```{r Temporal Analysis}
+# 1. Temporal Analysis
+## Accidents by Hour
+ggplot(accidents, aes(x = Hour, y = ..density..)) +
+  geom_density(fill = "skyblue", alpha = 0.7) +
+  coord_polar(start = 0) +  # Start the polar plot at 0
+  labs(title = "Distribution of Accidents by Hour", x = "", y = "") +
+  theme_minimal() +
+  scale_x_continuous(breaks = seq(0, 24, by = 1), limits = c(0, 24))  # Set breaks from 0 to 24 and limit the x-axis
+
+
+## Accidents by Day of Week
+# filter NA values
+accidents <- accidents %>% filter(!is.na(Weekday))
+ggplot(accidents, aes(x = Weekday, y = ..count.., group = 1)) +
+  geom_line(stat = "count", color = "lightgreen", size = 1.5) +
+  geom_point(stat = "count", color = "darkgreen", size = 3) +
+  labs(title = "Distribution of Accidents by Day of Week", x = "", y = "Number of Accidents") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+## Accidents by Month
+accidents <- accidents %>% filter(!is.na(Month))
+ggplot(accidents, aes(x = Month, y = ..count.., group = 1)) +
+  geom_line(stat = "count", color = "salmon", size = 1) +
+  geom_point(stat = "count", color = "red", size = 3) +
+  labs(title = "Distribution of Accidents by Month", x = "", y = "Number of Accidents") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
 ```{r Accidents with Injuries or Deaths}
 # Load necessary libraries
 library(ggplot2)
@@ -517,7 +585,7 @@ ggplot(agg_df, aes(x = TimeOfDay, y = Weekday, fill = Accidents)) +
 ### If you like Tableau, you will love Esquisse
 
 Esquisse is a package that allows you to create interactive plots and dashboards in R. 
-It is similar to Tableau in that it provides a user-friendly interface for creating visualizations without writing code.
+It is similar to Tableau in that it provides a user-friendly interface for creating visualizations without writing code. After loading your data, you can create plots interactively by dragging and dropping variables.
 
 To use Esquisse, you need to install the package and then load it in your R script. 
 After loading the package, you can launch the web app by calling the `esquisser()` function with your data as an argument.
@@ -532,6 +600,20 @@ esquisser(data) # Opens the web app in the Viewer pane or in the browser with th
 ```
 
 ![Esquisse](resources\esquisse.png)
+
+<div class="alert alert-primary" role="alert">
+
+NOTE:
+Trying to load the data was tricky, Esquisse would not load the data from the merged dataset on the code.
+Opening Esquisse without an argument would start the app and prompt to load the data from the interface, but it would not load the data from the code.
+
+Now trying to load the data from the interface, a warning message on the UI finally tells the problem, that loading more than 5MB of data was not possible.
+
+This is a limitation of the Shiny app, which is used to create the Esquisse interface. The maximum request size for Shiny apps is 5MB by default, which is not enough for our dataset. It could have been a deal breaker for the use of Esquisse in this project and any other with a large dataset.
+
+To solve this issue, we can increase the maximum request size for Shiny apps by setting the `options(shiny.maxRequestSize)` option to a higher value. In this case, we set it to 300MB, which should be enough for our dataset.
+
+</div>
 
 At the botom left of the pane, in the options tab, you can select to make the plots with `plotly` to make them interactive.
 Once active, you can hover over the plots to see the data points and values or click on the legend to filter the data.
@@ -577,3 +659,4 @@ fig <- fig %>%
 
 fig
 ```
+
