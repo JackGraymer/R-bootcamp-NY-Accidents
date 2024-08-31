@@ -21,7 +21,7 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = FALSE)
 This analysis aims to provide some insight about the car crashes in New York during the period of 2016 to 2022, focusing on some key factors such as vehicle type, hour and weather.
 
 ## Files
-We count with 2 datasets, one cointaining the vehicle crashes and the second one about the weather of the location.
+We count with 2 datasets, one containing the vehicle crashes and the second one about the weather of the location.
 
 | Name     | Rows     | Columns | Each row is a    | Link                                                                                      |
 |:------:|:----:|:---:|:--------:|:----:|
@@ -30,17 +30,16 @@ We count with 2 datasets, one cointaining the vehicle crashes and the second one
 
 ## Data Preparation
 
-In this step we will collect the data from the datasets, clean it and merge it to create a comprehensive dataset for analysis. 
-Before merging, the data needs to be cleaned and enriched with additional information. Also shrinking the data to make it more manageable.
+In this step, it is shown how the data was collected from the datasets, cleaned, and merged to create a comprehensive dataset for analysis. Before merging, the data was cleaned and enriched with additional information. Additionally, the data was shrunk to make it more manageable.
 
 ### Data Cleaning
 
 The data cleaning process involves removing columns with high NA ratios, filtering out rows with missing values, and creating new columns to categorize the main causes of accidents. The data is then enriched with additional information such as the day of the week, month, quarter, year, and time of day.
 
-Both datasets, specially `vehicles.csv`, contain a lot of rows which require a lot of memory and time to process. For this reason, we decide to eliminate rows with missing values and columns with high NA ratios, such as vehicle type 3, 4 and 5 as there are very few values in these columns (multiple vehicle accidents).
+Both datasets, specially `vehicles.csv`, contain a lot of rows which require a lot of memory and time to process. For this reason, it has been decided to eliminate rows with missing values and columns with high NA ratios, such as vehicle type 3, 4 and 5 as there are very few values in these columns (multiple vehicle accidents).
 
 `Weather.xlsx` is a smaller dataset and the cleaning process is simpler, we just need to convert the time column to a correct format and rename some columns for better understanding.
-Finally the data is then merged with the weather data to create a comprehensive dataset for analysis.
+Finally, the data is then merged with the weather data to create a comprehensive dataset for analysis.
 
 ```{r Data Cleaning, eval=FALSE}
   ## packages
@@ -189,8 +188,10 @@ lapply(names(split_datasets), function(year) {
 ```
 
 ## Analysis
+The following subsections will illustrate the insights gained by generating plots of the given datasets.
 
 ### Total Accidents in New York
+
 ```{r total_accidents}
 # Loading necessary libraries
 library(ggplot2)
@@ -215,11 +216,12 @@ ggplot(yearly_accidents, aes(x = Year, y = Total_Accidents, fill = Year)) +
        y = "Number of Accidents") + theme_minimal() + theme(legend.position = "none")
 
 ```
+As it is known, New York City is the city that never sleeps. Therefore, several thousands of people are on the road which can lead to some traffic jam and car crashes. Therefore, the first step was to have a very broad understanding of the rough numbers. For this reason, the first plot has been created to see, how many accidents there were in the last few years.
 
-In this graph we can see the total number of accidents per year in New York from 2016 to 2022. 
+So in this graph the total number of accidents per year in New York from 2016 to 2022 are shown.
 The number of accidents seems to be decreasing over the years, which is a positive trend.
 
-It is important to note that we cannot draw any conclusions from this graph alone, as there may be other factors influencing the number of accidents, such as the pandemic of COVID-19 and the lockdowns that occurred in 2020 and 2021, which could have reduced the number vehicles on the road and therefore the number of accidents.
+It is important to note that no conclusions can be drawn from this graph alone, as other factors may have influenced the number of accidents, such as the COVID-19 pandemic and the lockdowns that occurred in 2020 and 2021, which could have reduced the number of vehicles on the road and, consequently, the number of accidents.
 
 ### Correlation between Total Accidents and Total Rainfall per Month
 ```{r Correlation}
@@ -290,7 +292,7 @@ ggplot(correlation_data, aes(x = Total_Rainfall, y = Total_Accidents)) +
 
 ```
 
-This graph shows the correlation between the total number of accidents and the total rainfall per month in New York in 2021. The result of `0.59` indicates a moderate positive correlation between the two variables, suggesting that higher rainfall may lead to more accidents.
+This graph shows the correlation between the total number of accidents and the total rainfall per month in New York in 2021. The result of `0.59` indicates a moderate positive correlation between the two variables, suggesting that higher rainfall may lead to more accidents. Nevertheless, there may be multiple other factors influencing the final result such as how many cars/people are on the road, any events or other environmental exposure.
 
 ### Monthly Accidents and Rainfall
 
@@ -550,36 +552,122 @@ title(main = "without Injuries or Deaths")
 mtext("Accidents per Weekday", outer = TRUE, cex = 2, font = 2)
 
 ```
+The shown plots above shall be used as another step into a deeper analysis of when accidents are happening in New York.
+The plot shows three radar charts that compare the occurrence of accidents by weekday across three different categories: accidents with injuries, accidents with deaths, and accidents without injuries or deaths.
 
+In the first chart, shaded in blue, accidents with injuries are displayed. The chart indicates that such accidents are fairly evenly distributed throughout the week, with a slight increase towards the end of the week, particularly on Friday and Saturday. There is a noticeable decrease on Monday, suggesting that fewer injury-related accidents occur at the start of the week.
 
-```{r Heatmap Deadly and Injured Accidents}
-# Load necessary libraries
+The middle chart, shaded in red, focuses on accidents that result in deaths. This chart shows a clear concentration of deadly accidents towards the end of the week, especially on Friday and Saturday. In contrast, the beginning of the week, particularly Monday and Tuesday, sees fewer accidents with fatalities.
+
+The third chart, shaded in green, represents accidents that do not result in injuries or deaths. These accidents appear to be more evenly spread throughout the week, with a slight increase during the middle of the week, particularly on Wednesday. The frequency of these accidents is lower on Sunday and Monday.
+
+Overall, the charts reveal that accidents involving injuries and deaths tend to increase towards the weekend, while accidents without injuries or deaths occur more consistently throughout the week, with minor variations. The visual representation highlights the differences in accident patterns across the days of the week, with distinct trends for each type of accident.
+
+With this information, the team decided to dig one layer deeper to find out, on what time, what type of accidents happen mostly and gain some insightful information with that.
+
+```{r Heatmap Accidents with Injuries}
 library(ggplot2)
 library(dplyr)
 
-# Assuming `merged_df` is your prepared data from the previous steps
+# Load your accident data
 accidents_df <- read.csv("data/merged_data_2021.csv", header=TRUE)
+
 # Filter for the relevant days and reorder factors
-filtered_df <- accidents_df %>%
-  filter(Weekday %in% c("Thursday", "Friday", "Saturday")) %>%
-  mutate(TimeOfDay = factor(TimeOfDay, levels = c("Early Morning", "Morning", "Afternoon", "Late Afternoon", "Evening", "Night")),
-         Weekday = factor(Weekday, levels = c("Saturday", "Friday", "Thursday")))
+base_filtered_df <- accidents_df %>%
+        filter(Weekday %in% c("Thursday", "Friday", "Saturday")) %>%
+        mutate(TimeOfDay = factor(TimeOfDay, levels = c("Early Morning", "Morning", "Afternoon", "Late Afternoon", "Evening", "Night")),
+               Weekday = factor(Weekday, levels = c("Saturday", "Friday", "Thursday")))
 
-# Aggregate data by TimeOfDay and Weekday
-agg_df <- filtered_df %>%
-  group_by(Weekday, TimeOfDay) %>%
-  summarise(Accidents = n()) %>%
-  ungroup()
+# Filter data for accidents with injuries
+injured_filtered_df <- base_filtered_df %>%
+        filter(IS.INJURED.ACCIDENT == TRUE)
 
-# Plotting the data
-ggplot(agg_df, aes(x = TimeOfDay, y = Weekday, fill = Accidents)) +
-  geom_tile(color = "white") +
-  scale_fill_gradient(low = "white", high = "red") +
-  labs(title = "Deadly and Injured Accidents by Time of Day and Weekday (Thu-Sat)",
-       x = "Time of Day", y = "Weekday (reversed order)", fill = "Number of Accidents") +
-  theme_minimal()
+# Aggregate data for accidents with injuries
+agg_injured_df <- injured_filtered_df %>%
+        group_by(Weekday, TimeOfDay) %>%
+        summarise(Accidents = n()) %>%
+        ungroup()
+
+# Create the heatmap for accidents with injuries
+p1 <- ggplot(agg_injured_df, aes(x = TimeOfDay, y = Weekday, fill = Accidents)) +
+        geom_tile(color = "white") +
+        scale_fill_gradient(low = "white", high = "red") +
+        labs(title = "Accidents with Injuries", x = "Time of Day", y = "Weekday (reversed order)", fill = "Number of Accidents") +
+        theme_minimal() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
+
+# Display the plot
+print(p1)
 
 ```
+
+
+
+
+```{r Heatmap Accidents with Deaths}
+library(ggplot2)
+library(dplyr)
+
+# Filter data for accidents with deaths
+deadly_filtered_df <- base_filtered_df %>%
+        filter(IS.DEADLY.ACCIDENT == TRUE)
+
+# Aggregate data for accidents with deaths
+agg_deadly_df <- deadly_filtered_df %>%
+        group_by(Weekday, TimeOfDay) %>%
+        summarise(Accidents = n()) %>%
+        ungroup()
+
+# Create the heatmap for accidents with deaths
+p2 <- ggplot(agg_deadly_df, aes(x = TimeOfDay, y = Weekday, fill = Accidents)) +
+        geom_tile(color = "white") +
+        scale_fill_gradient(low = "white", high = "red") +
+        labs(title = "Accidents with Deaths", x = "Time of Day", y = "Weekday (reversed order)", fill = "Number of Accidents") +
+        theme_minimal() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
+
+# Display the plot
+print(p2)
+
+```
+
+
+```{r Heatmap Accidents without Injuries or Deaths}
+library(ggplot2)
+library(dplyr)
+
+# Filter data for accidents with no injuries or deaths
+no_injury_or_death_filtered_df <- base_filtered_df %>%
+        filter(IS.INJURED.ACCIDENT == FALSE & IS.DEADLY.ACCIDENT == FALSE)
+
+# Aggregate data for accidents without injuries or deaths
+agg_no_injury_or_death_df <- no_injury_or_death_filtered_df %>%
+        group_by(Weekday, TimeOfDay) %>%
+        summarise(Accidents = n()) %>%
+        ungroup()
+
+# Create the heatmap for accidents without injuries or deaths
+p3 <- ggplot(agg_no_injury_or_death_df, aes(x = TimeOfDay, y = Weekday, fill = Accidents)) +
+        geom_tile(color = "white") +
+        scale_fill_gradient(low = "white", high = "red") +
+        labs(title = "Accidents without Injuries or Deaths", x = "Time of Day", y = "Weekday (reversed order)", fill = "Number of Accidents") +
+        theme_minimal() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
+
+# Display the plot
+print(p3)
+
+```
+
+As mentioned in previous plot, with the knowledge acquired, the team decided to focus now on the Time of day, where accidents occurred in 2021.
+
+In the first heatmap, titled "Accidents with Injuries," the data is shown for Thursday, Friday, and Saturday across different times of the day. The color intensity indicates the number of accidents, with darker reds representing higher numbers. The highest concentration of accidents with injuries occurs on Friday afternoons, as indicated by the darkest red square. This suggests that the risk of accidents causing injuries peaks during this time.
+
+The second heatmap, titled "Accidents with Deaths," similarly shows data for Thursday, Friday, and Saturday. The most intense red, representing the highest number of fatal accidents, is observed on Thursday mornings and Saturday early mornings. This indicates that fatal accidents are more likely to occur during these times. The distribution is more varied across the different times of day and days of the week compared to accidents with injuries.
+
+The third heatmap, titled "Accidents without Injuries or Deaths," also covers the same days of the week and times of day. Here, the darkest red, indicating the highest number of non-injury, non-fatal accidents, is again centered on Friday afternoons. This suggests that, similar to accidents with injuries, non-injury accidents also peak in the afternoon on Fridays.
+
+In summary, all three heatmaps reveal patterns in the timing and frequency of different types of accidents. Accidents, whether resulting in injuries, deaths, or neither, tend to cluster around specific times of the day, particularly Friday afternoons. However, fatal accidents are more likely to occur early in the day on Thursdays and Saturdays.
 
 ## Chapter of Choice (Esquisse (Web Server App))
 ### If you like Tableau, you will love Esquisse
@@ -615,10 +703,119 @@ To solve this issue, we can increase the maximum request size for Shiny apps by 
 
 </div>
 
-At the botom left of the pane, in the options tab, you can select to make the plots with `plotly` to make them interactive.
+<div class="alert alert-primary" role="alert">
+
+NOTE:
+Trying to load the data was tricky, Esquisse would not load the data from the merged dataset on the code.
+Opening Esquisse without an argument would start the app and prompt to load the data from the interface, but it would not load the data from the code.
+
+Now trying to load the data from the interface, a warning message on the UI finally tells the problem, that loading more than 5MB of data was not possible.
+
+This is a limitation of the Shiny app, which is used to create the Esquisse interface. The maximum request size for Shiny apps is 5MB by default, which is not enough for our dataset. It could have been a deal breaker for the use of Esquisse in this project and any other with a large dataset.
+
+To solve this issue, we can increase the maximum request size for Shiny apps by setting the `options(shiny.maxRequestSize)` option to a higher value. In this case, we set it to 300MB, which should be enough for our dataset.
+
+</div>
+
+At the bottom left of the pane, in the options tab, you can select to make the plots with `plotly` to make them interactive.
 Once active, you can hover over the plots to see the data points and values or click on the legend to filter the data.
 
 ![Esquisse Options](resources\esquisse_plotly.png)
+
+## Shiny Application
+
+```{r Shiny, eval= FALSE }
+# Load necessary libraries
+library(shiny)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Load the data
+accident_data <- read.csv("data/merged_data_2021.csv", header = TRUE)
+accident_data$CRASH.DATE <- as.Date(accident_data$CRASH.DATE)
+min_date <- min(accident_data$CRASH.DATE, na.rm = TRUE)
+max_date <- max(accident_data$CRASH.DATE, na.rm = TRUE)
+
+# Define UI for the Shiny app
+ui <- fluidPage(
+        titlePanel("Accident Data Filter"),
+        sidebarLayout(
+                sidebarPanel(
+                        dateRangeInput("date_range", "Select Date Range:",
+                                       start = min_date,
+                                       end = max_date,
+                                       min = min_date,
+                                       max = max_date),
+                        selectInput("weekday", "Select Weekday(s):",
+                                    choices = unique(accident_data$Weekday),
+                                    selected = c("Monday", "Wednesday", "Friday"),
+                                    multiple = TRUE),
+                        checkboxInput("is_deadly", "Accidents with Death(s)", value = FALSE),
+                        checkboxInput("is_injured", "Accidents with injured people", value = FALSE),
+                        actionButton("filter", "Apply Filters")
+                ),
+
+                mainPanel(
+                        plotOutput("accident_plot")
+                )
+        )
+)
+# Define server logic for the Shiny app
+server <- function(input, output) {
+
+  filtered_data <- reactive({
+    data <- accident_data
+
+    # Extract start and end dates from the input
+    start_date <- input$date_range[1]
+    end_date <- input$date_range[2]
+
+    # Filter by the date range
+    data <- data %>% filter(CRASH.DATE >= start_date & CRASH.DATE <= end_date)
+
+    # Filter by weekdays
+    data <- data %>% filter(Weekday %in% input$weekday)
+
+    # Filter by deadly accidents
+    if (input$is_deadly) {
+      data <- data %>% filter(IS.DEADLY.ACCIDENT == TRUE)
+    }
+
+    # Filter by injured accidents
+    if (input$is_injured) {
+      data <- data %>% filter(IS.INJURED.ACCIDENT == TRUE)
+    }
+
+    return(data)
+  })
+
+  output$accident_plot <- renderPlot({
+    data <- filtered_data()
+
+    # Summarize the data to get the count of accidents per weekday
+    data_summary <- data %>%
+            group_by(Weekday) %>%
+            summarise(Number_of_Accidents = n())
+
+    # Plot the number of accidents by weekday
+    ggplot(data_summary, aes(x = Weekday, y = Number_of_Accidents, fill = Weekday)) +
+            geom_bar(stat = "identity") +
+            labs(title = "Number of Accidents by Weekday",
+                 x = "Weekday",
+                 y = "Number of Accidents") +
+            theme_minimal()
+  })
+}
+
+# Run the application
+shinyApp(ui = ui, server = server)
+```
+With below shiny application, users are able to select a date range (default takes the first and last date of the loaded dataset), the weekday(s) specify whether only accidents with Death(s) and/or injured people should be included it in.
+Depending on the selection, the plots is automatically being updated giving the user a direct feedback for doing some very basic analysis of how many accidents happen on what specific weekdays given the date range.
+
+![Shiny Application](resources\shiny.png)
+
 
 ## Interactive Map of Accidents in New York
 
@@ -660,3 +857,21 @@ fig <- fig %>%
 fig
 ```
 
+
+## ChatGPT with its highs and lows
+
+When we first set out on our data science project, we were excited but also a bit overwhelmed. We knew we were dealing with a complex problem—massive datasets, intricate relationships, and the need to create meaningful visualizations that could reveal the insights hidden within the data. As much as we loved diving into R and exploring the depths of data manipulation, we also knew that the journey ahead would be challenging and time-consuming. That’s when we decided to bring ChatGPT into our process.
+
+Initially, we approached ChatGPT with cautious optimism. Could an AI really help us navigate the complexities of data science? Could it generate R code that would actually work? Well, we obviously knew the answer; Yes! Whether we were stuck on which plot would best represent our data or needed help writing a tricky piece of R code, ChatGPT was there, offering suggestions that we hadn’t even thought of. It became our go-to resource, a kind of brainstorming partner that was always available and always ready with ideas.
+
+For example, when we were trying to figure out how to visualize our data, ChatGPT suggested options like heatmaps, radar charts, and density plots. Not only did it give us the idea, but it also provided the R code to create these visualizations. This saved us countless hours that we would have otherwise spent tweaking and troubleshooting code. When we encountered errors—inevitable in any data science project—ChatGPT was incredibly helpful in diagnosing the issues and suggesting fixes. It was like having a personal R consultant available at all times.
+
+However, as much as ChatGPT boosted our productivity, it also taught us an important lesson: even with AI, the human touch is irreplaceable. We quickly learned that while ChatGPT could provide code and suggest visualizations, these outputs needed to be rigorously checked. Sometimes, the code didn’t produce exactly what we wanted, or the visualization didn’t tell the story we were trying to convey. We had to step back, critically evaluate the results, and make adjustments to ensure that our analysis was accurate and meaningful.
+
+Another interesting challenge we faced was the impact of having so much information and functionality at our fingertips. Using ChatGPT made our process incredibly efficient, but it also shortened the time we usually spent brainstorming and exploring different approaches. There’s something to be said for the creative process that comes from struggling with a problem and experimenting with various solutions. With ChatGPT, we sometimes found that this creative journey was cut short, as solutions were so readily available. It was a trade-off between efficiency and the creative exploration that often leads to unexpected insights in data science.
+
+Yet, in today’s data-driven world, where the ability to quickly analyze and interpret data is crucial, using AI tools like ChatGPT has become almost essential. The efficiency gains we experienced were undeniable. We could spend less time wrestling with the syntax of R and more time focusing on the bigger picture—interpreting the data, refining our analyses, and communicating our findings. ChatGPT didn’t take away our ability to think critically or creatively; instead, it enhanced our ability to execute on those thoughts more quickly and with greater precision.
+
+Reflecting on our experience, it’s clear that using ChatGPT was like having a turbocharged assistant in our data science toolkit. It didn’t replace our skills in R or our understanding of data, but it did significantly streamline our workflow. We were able to focus more on the insights and less on the mechanics, which made our project not only faster but also richer in the insights we could uncover.
+
+In conclusion, while tools like ChatGPT are reshaping the way we approach data science, they also remind us of the importance of maintaining our critical thinking and creativity. AI can accelerate the process, but it’s still up to us to ensure that the results are accurate, meaningful, and aligned with our goals. In the end, the combination of human insight and AI-driven efficiency is what made our project a success, and it’s a balance we’ll continue to seek in future endeavors.
