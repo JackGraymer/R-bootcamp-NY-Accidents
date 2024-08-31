@@ -482,7 +482,18 @@ title(main = "without Injuries or Deaths")
 mtext("Accidents per Weekday", outer = TRUE, cex = 2, font = 2)
 
 ```
-The shown plots above shall be used as another step into a deeper analysis of when accidents are happening in New York. Therefore, the three spider-radars are all sharing some commonalities. Accidents seem to occur closer to the Weekend than at the beginning of the week, no matter whether it was a small crash without injuries or fatal crashes leading to deaths. With this information, the team decided to dig one layer deeper to find out, on what time, what type of accidents happen mostly and gain some insightful information with that.
+The shown plots above shall be used as another step into a deeper analysis of when accidents are happening in New York.
+The plot shows three radar charts that compare the occurrence of accidents by weekday across three different categories: accidents with injuries, accidents with deaths, and accidents without injuries or deaths.
+
+In the first chart, shaded in blue, accidents with injuries are displayed. The chart indicates that such accidents are fairly evenly distributed throughout the week, with a slight increase towards the end of the week, particularly on Friday and Saturday. There is a noticeable decrease on Monday, suggesting that fewer injury-related accidents occur at the start of the week.
+
+The middle chart, shaded in red, focuses on accidents that result in deaths. This chart shows a clear concentration of deadly accidents towards the end of the week, especially on Friday and Saturday. In contrast, the beginning of the week, particularly Monday and Tuesday, sees fewer accidents with fatalities.
+
+The third chart, shaded in green, represents accidents that do not result in injuries or deaths. These accidents appear to be more evenly spread throughout the week, with a slight increase during the middle of the week, particularly on Wednesday. The frequency of these accidents is lower on Sunday and Monday.
+
+Overall, the charts reveal that accidents involving injuries and deaths tend to increase towards the weekend, while accidents without injuries or deaths occur more consistently throughout the week, with minor variations. The visual representation highlights the differences in accident patterns across the days of the week, with distinct trends for each type of accident.
+
+With this information, the team decided to dig one layer deeper to find out, on what time, what type of accidents happen mostly and gain some insightful information with that.
 
 ```{r Heatmap Accidents with Injuries}
 library(ggplot2)
@@ -519,6 +530,10 @@ p1 <- ggplot(agg_injured_df, aes(x = TimeOfDay, y = Weekday, fill = Accidents)) 
 print(p1)
 
 ```
+
+
+
+
 ```{r Heatmap Accidents with Deaths}
 library(ggplot2)
 library(dplyr)
@@ -545,6 +560,8 @@ p2 <- ggplot(agg_deadly_df, aes(x = TimeOfDay, y = Weekday, fill = Accidents)) +
 print(p2)
 
 ```
+
+
 ```{r Heatmap Accidents without Injuries or Deaths}
 library(ggplot2)
 library(dplyr)
@@ -572,8 +589,15 @@ print(p3)
 
 ```
 
-As mentioned in previous plot, with the knowledge acquired, the team decided to focus now on the Time of day, where accidents occurred in 2021. So the given plot clearly indicates that during Rush Hour (5pm to 8pm) most accidents occur. This may be simply due to the fact, that this is the time, when most people are actually on the road as either pedestrian, biker, or car-driver.
+As mentioned in previous plot, with the knowledge acquired, the team decided to focus now on the Time of day, where accidents occurred in 2021.
 
+In the first heatmap, titled "Accidents with Injuries," the data is shown for Thursday, Friday, and Saturday across different times of the day. The color intensity indicates the number of accidents, with darker reds representing higher numbers. The highest concentration of accidents with injuries occurs on Friday afternoons, as indicated by the darkest red square. This suggests that the risk of accidents causing injuries peaks during this time.
+
+The second heatmap, titled "Accidents with Deaths," similarly shows data for Thursday, Friday, and Saturday. The most intense red, representing the highest number of fatal accidents, is observed on Thursday mornings and Saturday early mornings. This indicates that fatal accidents are more likely to occur during these times. The distribution is more varied across the different times of day and days of the week compared to accidents with injuries.
+
+The third heatmap, titled "Accidents without Injuries or Deaths," also covers the same days of the week and times of day. Here, the darkest red, indicating the highest number of non-injury, non-fatal accidents, is again centered on Friday afternoons. This suggests that, similar to accidents with injuries, non-injury accidents also peak in the afternoon on Fridays.
+
+In summary, all three heatmaps reveal patterns in the timing and frequency of different types of accidents. Accidents, whether resulting in injuries, deaths, or neither, tend to cluster around specific times of the day, particularly Friday afternoons. However, fatal accidents are more likely to occur early in the day on Thursdays and Saturdays.
 
 ## Chapter of Choice (Esquisse (Web Server App))
 ### If you like Tableau, you will love Esquisse
@@ -601,9 +625,6 @@ Once active, you can hover over the plots to see the data points and values or c
 ![Esquisse Options](resources\esquisse_plotly.png)
 
 ## Shiny Application
-
-With below shiny application, users are able to select a date range (default takes the first and last date of the loaded dataset), the weekday(s) specify whether only accidents with Death(s) and/or injured people should be included it in.
-Depending on the selection, the plots is automatically being updated giving the user a direct feedback for doing some very basic analysis of how many accidents happen on what specific weekdays given the date range.
 
 ```{r Shiny, eval= FALSE }
 # Load necessary libraries
@@ -692,6 +713,8 @@ server <- function(input, output) {
 # Run the application
 shinyApp(ui = ui, server = server)
 ```
+With below shiny application, users are able to select a date range (default takes the first and last date of the loaded dataset), the weekday(s) specify whether only accidents with Death(s) and/or injured people should be included it in.
+Depending on the selection, the plots is automatically being updated giving the user a direct feedback for doing some very basic analysis of how many accidents happen on what specific weekdays given the date range.
 
 ![Shiny Application](resources\shiny.pdf)
 
