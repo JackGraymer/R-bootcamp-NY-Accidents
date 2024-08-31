@@ -188,8 +188,6 @@ lapply(names(split_datasets), function(year) {
 ```
 
 ## Analysis
-# admonition
-
 
 ### Total Accidents in New York
 ```{r total_accidents}
@@ -295,7 +293,7 @@ This graph shows the correlation between the total number of accidents and the t
 
 ### Monthly Accidents and Rainfall
 
-```{r Monthly Accidents and Rainfall}
+```{r Monthly Accidents and Rainfall, fig.cap="Monthly Number of Accidents by Rainfall Category with Monthly Rainfall"}
 # Load necessary libraries
 library(ggplot2)
 library(dplyr)
@@ -600,7 +598,7 @@ Esquisse works with the `plotly` package to create interactive plots.
 ```{r Esquisse, eval=FALSE }
 library(esquisse)
 library(plotly)
-options(shiny.maxRequestSize=30*1024^2) # Increase the maximum request size for Shiny apps
+options(shiny.maxRequestSize=300*1024^2) # Increase the maximum request size for Shiny apps
 esquisser(data) # Opens the web app in the Viewer pane or in the browser with the data loaded
 ```
 
@@ -610,3 +608,43 @@ At the botom left of the pane, in the options tab, you can select to make the pl
 Once active, you can hover over the plots to see the data points and values or click on the legend to filter the data.
 
 ![Esquisse Options](resources\esquisse_plotly.png)
+
+## Interactive Map of Accidents in New York
+
+In this section, we will create an interactive map of accidents in New York using the `plotly` package.
+The map will show the density of accidents based on latitude and longitude coordinates, with color indicating the density of accidents in each area.
+It will be an interactive map that allows you to zoom in and out and hover over data points to see more information.
+
+In the first view, it can look like that the whole New York is yellow, but if you zoom in, you will see the density of accidents in each area. This is to be expected and is due to the high number of inhabitants and accidents in New York.
+
+It is interesting to see that the accidents are concentrated in certain areas, such as Manhattan and Brooklyn, which are more densely populated and have more traffic. Also, we can see a trend that horizontal roads (East-West) have more accidents than vertical roads (North-South).
+
+Also, as expected, the accidents are more concentrated in main roads and highways, where the traffic is heavier, until a bridge is reached. In the map, we can see that virtually all bridges are free of accidents, which is a good sign for traffic safety.
+
+```{r}
+accidents <- read.csv("data/merged_data_2021.csv")
+library(plotly)
+
+# filter latitude and longitude equal to 0
+accidents <- accidents[accidents$LATITUDE != 0 & accidents$LONGITUDE != 0,]
+
+fig <- accidents 
+fig <- fig %>%
+  plot_ly(
+    type = 'densitymapbox',
+    lat = ~LATITUDE,
+    lon = ~LONGITUDE,
+    coloraxis = 'coloraxis',
+    alpha = 0.6,
+    alpha_stroke = 0.3,
+    radius = 4) 
+fig <- fig %>%
+  layout(
+    mapbox = list(
+      style="open-street-map",
+      center= list(lat=40.7128, lon=-74.0060),  # Coordinates for New York
+      zoom = 8.5),  # Adjust zoom level as needed
+    coloraxis = list(colorscale = 'Viridis'))
+
+fig
+```
