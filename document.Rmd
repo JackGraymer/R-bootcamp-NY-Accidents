@@ -1,7 +1,7 @@
 ---
 title: "Road accidents in New York"
 author: "Luca Renz & Alvaro Cervan"
-date: "r Sys.Date()"
+date: "`r Sys.Date()`"
 output:
   html_document:
     toc: yes
@@ -16,6 +16,7 @@ output:
 ```{r setup, include=FALSE}
 # Global options
 knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = FALSE)
+knitr::opts_chunk$set(cache=TRUE)
 ```
 
 This analysis aims to provide some insight about the car crashes in New York during the period of 2016 to 2022, focusing on some key factors such as vehicle type, hour and weather.
@@ -380,7 +381,9 @@ Here the goal is to analyze the distribution of accidents by hour, day of the we
 
 Hopefully, this analysis will provide insights into the temporal patterns of accidents in New York, helping to identify high-risk and safer periods.
 
-```{r Processing v2, echo=FALSE}
+### Temporal Analysis
+
+```{r Processing v2, echo=FALSE, cache=TRUE}
 # Load necessary libraries
 library(tidyverse)
 library(lubridate)
@@ -409,8 +412,7 @@ accidents <- accidents %>%
   filter(BOROUGH != "" & !is.na(BOROUGH) & trimws(BOROUGH) != "")  # Remove empty or space-only BOROUGH entries
 ```
 
-
-```{r Temporal Analysis}
+```{r Temporal Analysis, cache=TRUE}
 # 1. Temporal Analysis
 ## Accidents by Hour
 ggplot(accidents, aes(x = Hour, y = ..density..)) +
@@ -440,6 +442,94 @@ ggplot(accidents, aes(x = Month, y = ..count.., group = 1)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+
+### Spatial Analysis
+Here we will analyze the distribution of accidents by borough and visualize the accident locations on a map.
+
+```{r Contributing Factors Analysis, cache=TRUE}
+# 4. Contributing Factors Analysis
+accidents %>%
+  count(CONTRIBUTING.FACTOR.VEHICLE.1, sort = TRUE) %>%
+  top_n(10) %>%
+  ggplot(aes(area = n, fill = CONTRIBUTING.FACTOR.VEHICLE.1, 
+             label = paste(CONTRIBUTING.FACTOR.VEHICLE.1, n, sep = "\n"))) +
+  geom_treemap() +
+  geom_treemap_text(colour = "white", place = "centre", size = 10) +
+  labs(title = "Top 10 Contributing Factors") +
+  theme(legend.position = "none")
+
+# 4. Contributing Factors Analysis
+accidents %>%
+  count(Category, sort = TRUE) %>%
+  top_n(10) %>% 
+  ggplot(aes(area = n, fill = Category, 
+             label = paste(Category, n, sep = "\n"))) +
+  geom_treemap() +
+  geom_treemap_text(colour = "white", place = "centre", size = 10) +
+  labs(title = "Top 10 Contributing Factors") +
+  theme(legend.position = "none")
+```
+
+```{r Vehicle Type Analysis, cache=TRUE}
+# 6. Vehicle Type Analysis
+# filter "" and " " values
+accidents <- accidents %>% filter(VEHICLE.TYPE.CODE.1 != "" & trimws(VEHICLE.TYPE.CODE.1) != "")
+
+accidents %>%
+  count(VEHICLE.TYPE.CODE.1, sort = TRUE) %>%
+  top_n(10) %>%
+  mutate(VEHICLE.TYPE.CODE.1 = fct_reorder(VEHICLE.TYPE.CODE.1, n)) %>%
+  ggplot(aes(x = n, y = VEHICLE.TYPE.CODE.1)) +
+  geom_segment(aes(x = 0, xend = n, yend = VEHICLE.TYPE.CODE.1), color = "#3f3e3e",) +
+  geom_point(size = 5, color = "orange") +
+  labs(title = "Top 10 Vehicle Types Involved in Accidents", x = "Number of Accidents", y = "") +
+  theme_minimal()+
+  # adds number of accidents below the bars
+  geom_text(aes(label = n), hjust = 0.5, size = 3, nudge_y = 0.4,)
+```
+
+```{r Time Series Analysis, cache=TRUE}
+# 7. Time Series Analysis
+accidents %>%
+  count(CRASH.DATETIME = floor_date(CRASH.DATETIME, "day")) %>%
+  ggplot(aes(x = CRASH.DATETIME, y = n)) +
+  geom_line(color = "blue") +
+  geom_smooth(method = "loess", color = "red", se = FALSE) +
+  labs(title = "Daily Accident Counts Over Time", x = "Date", y = "Number of Accidents") +
+  theme_minimal() +
+  ylim(0, 300)  # Set y-axis maximum to 500
+```
+
+```{r Borough Comparison, cache=TRUE}
+# 8. Borough Comparison
+accidents %>%
+  group_by(BOROUGH) %>%
+  summarise(
+    Injury_Rate = sum(IS.INJURED.ACCIDENT) / n(),
+    Total_Accidents = n()
+  ) %>%
+  ggplot(aes(x = Total_Accidents, y = Injury_Rate, size = Total_Accidents, color = BOROUGH)) +
+  geom_point(alpha = 0.7) +
+  scale_size(range = c(3, 15)) +
+  labs(title = "Injury Rate vs Total Accidents by Borough",
+       x = "Total Number of Accidents", y = "Injury Rate") +
+  theme_minimal()
+```
+
+```{r Time of the Day Analysis, cache=TRUE}
+# 9. time of the day (morning, night, evening) with the highest number of accidents
+accidents %>%
+  
+  count(TimeOfDay) %>%
+  ggplot(aes(x = TimeOfDay, y = n, fill = TimeOfDay)) +
+  geom_col() +
+  labs(title = "Number of Accidents by Time of Day", x = "Time of Day", y = "Number of Accidents") +
+  theme_minimal()
+```
+
+
+
+
 
 ```{r Accidents with Injuries or Deaths}
 # Load necessary libraries
