@@ -893,6 +893,38 @@ Once active, you can hover over the plots to see the data points and values or c
 
 ![Esquisse Options](resources\esquisse_plotly.png)
 
+#### Injuries by Hour
+
+![Esquisse Plot](resources\esquisse people injured.png)
+
+In this plot, the number of accidents with injuries is shown by the hour of the day. The plot reveals that after 10 AM, the number of accidents with injuries increases repidly, peaking by midnight. 
+
+This can be attributed to various factors, such as increased traffic during the day, driver fatigue, and reduced visibility at night. Also as shown in the categories before, it could be related to alcohol consumption or other drugs, which are more likely to be consumed during the night.
+
+#### Deaths by Hour
+
+![Esquisse Plot](resources\esquisse people killed.png)
+
+This plot shows the number of accidents with deaths by the hour of the day. The plot indicates that the number of fatal accidents is relatively low during the day, with a slight increase in the evening. However, the number of fatal accidents rises significantly after midnight, peaking in the early morning hours.
+
+This trend suggests that fatal accidents are more likely to occur during the night and early morning, again, possibly due to factors such as reduced visibility, driver fatigue, increased risk-taking behavior, and impaired driving due to alcohol or drugs.
+
+This two plots are important to understand the risks of accidents at different times of the day and when accidents are more likely to result in injuries or fatalities. This information can help inform traffic safety measures and interventions to reduce the number of accidents and improve road safety.
+
+### About Esquisse
+
+Esquisse is a powerful tool for creating interactive plots and dashboards in R. It provides a user-friendly interface that allows you to create visualizations without writing code. The drag-and-drop functionality makes it easy to explore your data and create custom plots quickly.
+
+For users familiar with Tableau or other data visualization tools, Esquisse offers a similar experience in R. You can create a wide range of plots, including scatter plots, bar charts, line graphs, and more. The interactive features allow you to explore your data in depth and gain insights into patterns and trends.
+
+Esquisse is a valuable tool for data analysis, exploratory data visualization, and sharing insights with others. It is especially useful for users who prefer a visual interface for creating plots and dashboards. With Esquisse, you can create professional-looking visualizations that enhance your data analysis and storytelling.
+
+Nevertheless, it comes with some limitations when compared with other software. 
+It might not be as intuitive or powerful as Tableau, and it may not offer the same level of customization or advanced features.
+Also, the size of the dataset is limited by the maximum request size for Shiny apps, which can be a constraint for large datasets and has to be changed manually.
+
+Overall, Esquisse is a valuable tool for creating interactive plots and dashboards in R, and it can be a great addition to your data analysis toolkit.
+
 ## Shiny Application
 
 ```{r Shiny, eval= FALSE }
@@ -982,11 +1014,12 @@ server <- function(input, output) {
 # Run the application
 shinyApp(ui = ui, server = server)
 ```
-With below shiny application, users are able to select a date range (default takes the first and last date of the loaded dataset), the weekday(s) specify whether only accidents with Death(s) and/or injured people should be included it in.
+Below is a simple **Shiny** app, where users are able to select a date range (default takes the first and last date of the loaded dataset), the weekday(s) specify whether only accidents with Death(s) and/or injured people should be included it in.
 Depending on the selection, the plots is automatically being updated giving the user a direct feedback for doing some very basic analysis of how many accidents happen on what specific weekdays given the date range.
 
 ![Shiny Application](resources\shiny.png)
 
+> It is important to clarify that the above mentioned Esquisse is a Shiny application, that essentially is tailored to setup on the UI the plots that the user wants to see by clicking and dragging the variables, while the setup for the Shiny app is done by the developer, where the user can only select the variables to be shown. More functionality can be added to the Shiny app, but it requires more coding.
 
 ## Interactive Map of Accidents in New York
 
@@ -1046,3 +1079,12 @@ Yet, in today’s data-driven world, where the ability to quickly analyze and in
 Reflecting on our experience, it’s clear that using ChatGPT was like having a turbocharged assistant in our data science toolkit. It didn’t replace our skills in R or our understanding of data, but it did significantly streamline our workflow. We were able to focus more on the insights and less on the mechanics, which made our project not only faster but also richer in the insights we could uncover.
 
 In conclusion, while tools like ChatGPT are reshaping the way we approach data science, they also remind us of the importance of maintaining our critical thinking and creativity. AI can accelerate the process, but it’s still up to us to ensure that the results are accurate, meaningful, and aligned with our goals. In the end, the combination of human insight and AI-driven efficiency is what made our project a success, and it’s a balance we’ll continue to seek in future endeavors.
+
+## Conclusion
+
+In this project, we explored a dataset of traffic accidents in New York City from 2016 to 2022, focusing on the data from 2021. We analyzed various aspects of the accidents, including the time, location, contributing factors, vehicle types, and injuries or deaths. Through data visualization and analysis, we gained insights into the patterns and trends of accidents in New York, helping to identify areas for traffic safety improvement.
+
+We found that human error is the most common cause of accidents, with factors like inattention, distraction, and failure to yield right-of-way contributing to a significant number of incidents. Sedans and SUVs are the most common vehicle types involved in accidents, reflecting their widespread use in the city. Accidents are more likely to occur during the day, with a peak in the afternoon and evening hours.
+
+By analyzing the data by borough, we identified differences in accident rates and injury rates across different areas of New York City. The Bronx and Brooklyn have higher accident rates and injury rates, while Staten Island has the lowest rates. These insights can inform targeted traffic safety measures and interventions to reduce accidents and improve road safety.
+
