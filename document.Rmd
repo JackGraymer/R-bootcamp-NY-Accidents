@@ -22,7 +22,7 @@ knitr::opts_chunk$set(cache=TRUE)
 This analysis aims to provide some insight about the car crashes in New York during the period of 2016 to 2022, focusing on some key factors such as vehicle type, hour and weather.
 
 ## Files
-We count with 2 datasets, one containing the vehicle crashes and the second one about the weather of the location.
+This analysis counts with 2 datasets, one containing the vehicle crashes and the second one about the weather of the location.
 
 | Name     | Rows     | Columns | Each row is a    | Link                                                                                      |
 |:------:|:----:|:---:|:--------:|:----:|
@@ -39,7 +39,7 @@ The data cleaning process involves removing columns with high NA ratios, filteri
 
 Both datasets, specially `vehicles.csv`, contain a lot of rows which require a lot of memory and time to process. For this reason, it has been decided to eliminate rows with missing values and columns with high NA ratios, such as vehicle type 3, 4 and 5 as there are very few values in these columns (multiple vehicle accidents).
 
-`Weather.xlsx` is a smaller dataset and the cleaning process is simpler, we just need to convert the time column to a correct format and rename some columns for better understanding.
+`Weather.xlsx` is a smaller dataset and the cleaning process is simpler, that just need to be convert the time column to a correct format and rename some columns for better understanding.
 Finally, the data is then merged with the weather data to create a comprehensive dataset for analysis.
 
 ```{r Data Cleaning, eval=FALSE}
@@ -176,8 +176,8 @@ str(merged_df)
 |:-------:|:-----:|:----:|:------:|
 | **Merged dataset** | 1M | 40      | Combination of vehicle and weather data |
 
-After merging the data, we will save each year to a separate file to make it easier to analyze the data by year. 
-We will perform both analyses on the full dataset and on years separately.
+After merging the data, it is saved each year in a separate file to make it easier to analyze the data by year. 
+This way is possible to perform both analyses on the full dataset and on years separately.
 
 ```{r Save Data by Year, eval=FALSE}
 # Save each year to a separate file
@@ -189,7 +189,7 @@ lapply(names(split_datasets), function(year) {
 ```
 
 ## Analysis
-The following subsections will illustrate the insights gained by generating plots of the given datasets.
+The following subsections illustrate the insights gained by generating plots of the given datasets.
 
 ### Total Accidents in New York
 
@@ -379,7 +379,7 @@ At the same time, the majority of accidents occur in no rain conditions, which c
 
 Here the goal is to analyze the distribution of accidents by hour, day of the week, and month.
 
-Hopefully, this analysis will provide insights into the temporal patterns of accidents in New York, helping to identify high-risk and safer periods.
+Hopefully, this analysis provides insights into the temporal patterns of accidents in New York, helping to identify high-risk and safer periods.
 
 
 ```{r Processing v2, echo=FALSE, cache=TRUE}
@@ -463,9 +463,9 @@ ggplot(accidents, aes(x = Weekday, y = ..count.., group = 1)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-On a dayly basis, it's appreciated how differences between days can be huge. 
+On a daily basis, it's appreciated how differences between days can be huge. 
 
-From the start of the week, until Wednesday we have a stable number of accidents, around the 9500. Here it starts to grow slightly until Thursday. On the last working day, on Friday, they rise steeply about a 10%, which could be linked to many factors, including that is the day that most people decide to go out or they move to outside New York for the weekend for different reasons (eg. visiting family, vacation...)
+From the start of the week, until Wednesday there is a stable number of accidents, around the 9500. Here it starts to grow slightly until Thursday. On the last working day, on Friday, they rise steeply about a 10%, which could be linked to many factors, including that is the day that most people decide to go out or they move to outside New York for the weekend for different reasons (eg. visiting family, vacation...)
 
 On the weekend on the other hand, maybe a bit counterintuitive, there is a substantial drop in accidents on the area, possibly for the motive mentioned above, of moving outside of this area, or quite the opposite, by it's inhabitants not moving so much by vehicle, meaning a higher stay at home or activities nearby their residence. This drop continues even more on Sunday, which could be related to religious activities as well as possible local policies about certain activities.
 
@@ -861,7 +861,7 @@ It is similar to Tableau in that it provides a user-friendly interface for creat
 
 To use Esquisse, you need to install the package and then load it in your R script. 
 After loading the package, you can launch the web app by calling the `esquisser()` function with your data as an argument.
-That will open a web browser with the Esquisse interface, where you can create plots interactively by dragging and dropping variables.
+That opens a web browser with the Esquisse interface, where you can create plots interactively by dragging and dropping variables.
 Esquisse works with the `plotly` package to create interactive plots.
 
 ```{r Esquisse, eval=FALSE }
@@ -883,7 +883,7 @@ Now trying to load the data from the interface, a warning message on the UI fina
 
 This is a limitation of the Shiny app, which is used to create the Esquisse interface. The maximum request size for Shiny apps is 5MB by default, which is not enough for our dataset. It could have been a deal breaker for the use of Esquisse in this project and any other with a large dataset.
 
-To solve this issue, we can increase the maximum request size for Shiny apps by setting the `options(shiny.maxRequestSize)` option to a higher value. In this case, we set it to 300MB, which should be enough for our dataset.
+To solve this issue, it's necessary to increase the maximum request size for Shiny apps by setting the `options(shiny.maxRequestSize)` option to a higher value. In this case is set it to 300MB, which should be enough for the merged dataset.
 
 </div>
 
@@ -1023,15 +1023,15 @@ Depending on the selection, the plots is automatically being updated giving the 
 
 ## Interactive Map of Accidents in New York
 
-In this section, we will create an interactive map of accidents in New York using the `plotly` package.
-The map will show the density of accidents based on latitude and longitude coordinates, with color indicating the density of accidents in each area.
-It will be an interactive map that allows you to zoom in and out and hover over data points to see more information.
+This section showcases an interactive map of accidents in New York using the `plotly` package.
+The map shows the density of accidents based on latitude and longitude coordinates, with color indicating the density of accidents in each area.
+It is an interactive map that allows you to zoom in and out and hover over data points to see more information.
 
-In the first view, it can look like that the whole New York is yellow, but if you zoom in, you will see the density of accidents in each area. This is to be expected and is due to the high number of inhabitants and accidents in New York.
+In the first view, it can look like that the whole New York is yellow, but when zooming in, the graph reveals the density of accidents in each area. This is to be expected and is due to the high number of inhabitants and accidents in New York.
 
-It is interesting to see that the accidents are concentrated in certain areas, such as Manhattan and Brooklyn, which are more densely populated and have more traffic. Also, we can see a trend that horizontal roads (East-West) have more accidents than vertical roads (North-South).
+It is interesting to see that the accidents are concentrated in certain areas, such as Manhattan and Brooklyn, which are more densely populated and have more traffic. Also, can be appreciated a trend that horizontal roads (East-West) have more accidents than vertical roads (North-South).
 
-Also, as expected, the accidents are more concentrated in main roads and highways, where the traffic is heavier, until a bridge is reached. In the map, we can see that virtually all bridges are free of accidents, which is a good sign for traffic safety.
+Also, as expected, the accidents are more concentrated in main roads and highways, where the traffic is heavier, until a bridge is reached. In the map, virtually all bridges are free of accidents, which is a good sign for traffic safety.
 
 ```{r}
 accidents <- read.csv("data/merged_data_2021.csv")
