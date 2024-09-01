@@ -411,16 +411,45 @@ accidents <- accidents %>%
   filter(BOROUGH != "" & !is.na(BOROUGH) & trimws(BOROUGH) != "")  # Remove empty or space-only BOROUGH entries
 ```
 
+#### Accidents by Hour
+
 ```{r Temporal Analysis by hour, cache=TRUE}
 # 1. Temporal Analysis
 ## Accidents by Hour
-ggplot(accidents, aes(x = Hour, y = ..density..)) +
+ggplot(accidents, aes(x = Hour, y = ..count..)) +
   geom_density(fill = "skyblue", alpha = 0.7) +
   coord_polar(start = 0) +  # Start the polar plot at 0
   labs(title = "Distribution of Accidents by Hour", x = "", y = "") +
   theme_minimal() +
-  scale_x_continuous(breaks = seq(0, 24, by = 1), limits = c(0, 24))  # Set breaks from 0 to 24 and limit the x-axis
+  scale_x_continuous(breaks = seq(0, 24, by = 1), limits = c(0, 24, NA))  # Set breaks from 0 to 24 and limit the x-axis
 ```
+
+The hourly analysis shows accidents in New York throughout the 24h of each day. Accidents don't dip below the thousand at anytime, rising quickly from the early morning around 4AM to 8AM, when the rise slows down until 4PM to 5PM, which represent the peak hour for accidents. These hours represent the movement in the city, from 7AM where the inhabitants move to work, school etc. Around 5PM, where the max is, can be identified with the "Rush hour" where most of the workers end their shift and commute.
+
+After 6PM, a slow decline in accidents continues during the evening and night until the next morning.
+
+#### Accidents by Time of Day
+
+```{r Time of the Day Analysis, cache=TRUE}
+# time of the day (morning, night, evening) with the highest number of accidents
+accidents %>%
+  
+  count(TimeOfDay) %>%
+  ggplot(aes(x = TimeOfDay, y = n, fill = TimeOfDay)) +
+  geom_col() +
+  labs(title = "Number of Accidents by Time of Day", x = "Time of Day", y = "Number of Accidents") +
+  theme_minimal()
+```
+
+This plot is higly related to the previous one, as it shows the same information but in a different way, by grouping the hours in 4 categories, which are Morning, Afternoon, Late Afternoon and Night.
+
+The graph illustrates that the likelihood of accidents in New York varies significantly depending on the time of day. The highest number of accidents occurs in the afternoon, followed by the evening. This trend suggests that increased traffic during these times, possibly due to people commuting home from work or school, contributes to a higher accident rate.
+
+In contrast, the morning sees fewer accidents, which might be attributed to lighter traffic or more cautious driving as people start their day. The night has the lowest number of accidents, likely due to reduced traffic volume and fewer vehicles on the road.
+
+Overall, the graph highlights the importance of being particularly cautious during the afternoon and evening when the risk of accidents is highest.
+
+#### Accidents by Day of Week
 
 ```{r Temporal Analysis by Day}
 ## Accidents by Day of Week
@@ -434,6 +463,14 @@ ggplot(accidents, aes(x = Weekday, y = ..count.., group = 1)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+On a dayly basis, it's appreciated how differences between days can be huge. 
+
+From the start of the week, until Wednesday we have a stable number of accidents, around the 9500. Here it starts to grow slightly until Thursday. On the last working day, on Friday, they rise steeply about a 10%, which could be linked to many factors, including that is the day that most people decide to go out or they move to outside New York for the weekend for different reasons (eg. visiting family, vacation...)
+
+On the weekend on the other hand, maybe a bit counterintuitive, there is a substantial drop in accidents on the area, possibly for the motive mentioned above, of moving outside of this area, or quite the opposite, by it's inhabitants not moving so much by vehicle, meaning a higher stay at home or activities nearby their residence. This drop continues even more on Sunday, which could be related to religious activities as well as possible local policies about certain activities.
+
+#### Accidents by Month
+
 ```{r Temporal Analysis by Month}
 
 ## Accidents by Month
@@ -446,12 +483,25 @@ ggplot(accidents, aes(x = Month, y = ..count.., group = 1)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+The graph shows the monthly distribution of accidents in New York, highlighting clear trends throughout the year:
+
+1. **Low Accident Rates (January-February)**: Accidents start at moderate levels in January and dip to their lowest in February, likely due to harsh winter weather reducing travel.
+
+2. **Rising Accident Rates (March-June)**: Accidents increase sharply from March, peaking in June. This rise may be due to better weather, leading to more travel and increased road traffic.
+
+3. **Plateau and Decline (July-November)**: After a slight drop in July, accident numbers steadily decline from August to November, possibly due to the transition to fall and reduced travel as the year progresses.
+
+4. **Significant Drop (December)**: December sees a notable decrease in accidents, similar to January, possibly due to holiday periods and the onset of winter.
+
+Accidents in New York peak in mid-year (April-June) and drop during winter months. Understanding these trends can help target road safety measures and reduce accidents during high-risk periods.
+
 ### Relevant factors 
 There are several factors that can contribute to car accidents, such as weather conditions, vehicle types, and the reported reason that caused the accident.
 
 Some of this factors range from traffic rules violations, illegal actions such as driving under the effects of alcohol or other impairing drugs and can be divided in different categories such as human error, mechanical error, environmental conditions, and medical conditions.
 
 Note that the data comes from real accidents, reported by the victims themselves. This means that the data is complex and innacurate. After cleaning and filtering, a big part of the reports could not be categorized properly, so an extra category for all of these was made.
+
 ```{r Contributing Factors Analysis, cache=TRUE}
 # 4. Contributing Factors Analysis
 accidents %>%
@@ -488,6 +538,8 @@ After categorizing the contributing factors, **Human error** is the most common 
 
 This shows that most accidents are caused by human mistakes, such as inattention, distraction, or failure to yield right-of-way. 
 
+#### Vehicle Type Analysis
+
 ```{r Vehicle Type Analysis, cache=TRUE}
 # 6. Vehicle Type Analysis
 # filter "" and " " values
@@ -506,7 +558,13 @@ accidents %>%
   geom_text(aes(label = n), hjust = 0.5, size = 3, nudge_y = 0.4,)
 ```
 
+The graph highlights the top 10 vehicle types involved in accidents in New York, offering insight into trends in vehicular safety. Sedans lead with over 31,000 incidents, likely due to their widespread use. SUVs and station wagons follow with more than 23,000 accidents, reflecting their popularity and the challenges of operating larger vehicles in urban settings.
 
+Commercial vehicles such as taxis, pick-up trucks, and box trucks also account for a significant number of accidents. These vehicles are crucial to the city's transportation system, and their involvement in accidents points to the risks associated with heavy traffic use. Buses, integral to public transport, appear on the list as well, showing that even professional drivers face difficulties in dense traffic.
+
+Smaller vehicles like bikes, e-bikes, and motorcycles are less frequently involved in accidents but still make the top 10, highlighting the vulnerabilities of these road users. Ambulances, while less involved, are also on the list, possibly due to the nature of their high-speed operations.
+
+### Time Series Analysis
 
 ```{r Time Series Analysis, cache=TRUE}
 # 7. Time Series Analysis
@@ -519,6 +577,16 @@ accidents %>%
   theme_minimal() +
   ylim(0, 300)  # Set y-axis maximum to 500
 ```
+
+The time series graph shows the daily count of accidents in New York over the course of 2021, with a visible trend line that highlights changes over time. Early in the year, there is a gradual increase in the number of accidents, which peaks around mid-year. This rise may reflect seasonal factors, such as increased travel and activity during warmer months.
+
+As the year progresses into the latter half, the trend line begins to slope downward, indicating a decrease in accident frequency. This reduction could be associated with factors like reduced daylight hours in fall and winter, weather conditions, or changing traffic patterns as the year ends.
+
+The day-to-day variability in accident counts, represented by the blue line, suggests that while there are general trends, daily fluctuations are significant, potentially driven by short-term factors like weather, events, or specific traffic incidents.
+
+Overall, the graph provides insights into how accident rates evolved throughout the year, with clear periods of increase and decline, helping to identify patterns that could inform traffic safety measures and resource allocation.
+
+### Borough Comparison
 
 ```{r Borough Comparison, cache=TRUE}
 # 8. Borough Comparison
@@ -536,22 +604,25 @@ accidents %>%
   theme_minimal()
 ```
 
-```{r Time of the Day Analysis, cache=TRUE}
-# 9. time of the day (morning, night, evening) with the highest number of accidents
-accidents %>%
-  
-  count(TimeOfDay) %>%
-  ggplot(aes(x = TimeOfDay, y = n, fill = TimeOfDay)) +
-  geom_col() +
-  labs(title = "Number of Accidents by Time of Day", x = "Time of Day", y = "Number of Accidents") +
-  theme_minimal()
-```
+The graph reveals several insights about the relationship between the number of accidents and injury rates across different boroughs in New York City. 
 
+**The Bronx** stands out with a relatively large dot, indicating a high number of accidents. Its position on the graph suggests that the injury rate is on the higher side compared to other boroughs, which could point to more severe traffic conditions or less effective safety measures.
 
+**Brooklyn** also has a significant number of accidents, as indicated by its large dot. However, its injury rate is slightly lower than that of the Bronx. This difference might suggest that Brooklyn has better safety measures in place or different traffic conditions that result in fewer injuries per accident.
 
+**Manhattan**'s dot is smaller than those for the Bronx and Brooklyn, indicating fewer accidents overall. The injury rate for Manhattan is moderate, suggesting that while there are fewer accidents, the conditions or severity of these accidents might differ from those in other boroughs.
 
+**Queens**, similar to Brooklyn, has a large dot, indicating a high number of accidents. The injury rate in Queens is comparable to Brooklyn, which might imply similar traffic conditions or safety measures in place.
 
+**Staten Island**, on the other hand, has the smallest dot, indicating the fewest accidents among the boroughs. Its injury rate is also the lowest, suggesting that Staten Island might benefit from better traffic safety measures or less congested roads, leading to fewer and less severe accidents.
+
+Overall, the graph provides a clear comparison of the injury rates and total number of accidents across different boroughs, highlighting areas where traffic safety could potentially be improved.
+
+### Injuries and Deaths Analysis
+
+#### Accidents with Injuries or Deaths by Weekday
 ```{r Accidents with Injuries or Deaths}
+
 # Load necessary libraries
 library(ggplot2)
 library(dplyr)
@@ -662,6 +733,7 @@ title(main = "without Injuries or Deaths")
 mtext("Accidents per Weekday", outer = TRUE, cex = 2, font = 2)
 
 ```
+
 The shown plots above shall be used as another step into a deeper analysis of when accidents are happening in New York.
 The plot shows three radar charts that compare the occurrence of accidents by weekday across three different categories: accidents with injuries, accidents with deaths, and accidents without injuries or deaths.
 
@@ -674,6 +746,8 @@ The third chart, shaded in green, represents accidents that do not result in inj
 Overall, the charts reveal that accidents involving injuries and deaths tend to increase towards the weekend, while accidents without injuries or deaths occur more consistently throughout the week, with minor variations. The visual representation highlights the differences in accident patterns across the days of the week, with distinct trends for each type of accident.
 
 With this information, the team decided to dig one layer deeper to find out, on what time, what type of accidents happen mostly and gain some insightful information with that.
+
+#### Heatmap Analysis of Accidents and Injuries
 
 ```{r Heatmap Accidents with Injuries}
 library(ggplot2)
@@ -779,7 +853,7 @@ The third heatmap, titled "Accidents without Injuries or Deaths," also covers th
 
 In summary, all three heatmaps reveal patterns in the timing and frequency of different types of accidents. Accidents, whether resulting in injuries, deaths, or neither, tend to cluster around specific times of the day, particularly Friday afternoons. However, fatal accidents are more likely to occur early in the day on Thursdays and Saturdays.
 
-## Chapter of Choice (Esquisse (Web Server App))
+## Chapter of Choice (Esquisse)
 ### If you like Tableau, you will love Esquisse
 
 Esquisse is a package that allows you to create interactive plots and dashboards in R. 
