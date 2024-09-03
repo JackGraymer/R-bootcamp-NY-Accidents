@@ -176,7 +176,7 @@ str(merged_df)
 |:-------:|:-----:|:----:|:------:|
 | **Merged dataset** | 1M | 40      | Combination of vehicle and weather data |
 
-After merging the data, it is saved each year in a separate file to make it easier to analyze the data by year. 
+After merging the data, it is saved each year in a separate file to make it easier to analyse the data by year. 
 This way is possible to perform both analyses on the full dataset and on years separately.
 
 ```{r Save Data by Year, eval=FALSE}
@@ -368,7 +368,7 @@ ggplot() +
   theme(legend.position = "right")
 ```
 
-This graph shows the monthly number of accidents in New York in 2021, categorized by rainfall intensity.
+This graph shows the monthly number of accidents in New York in 2021, categorised by rainfall intensity.
 The black line represents the total number of accidents per month, while the blue bars represent the total rainfall per month on a secondary y-axis. The dots represent the number of accidents in each rainfall category. 
 
 It can be appreciated that the number of accidents tends to increase with higher rainfall, especially in the "1 mm - 4 mm (Light rain)" and ">4 mm - 7 mm (Moderate rain)" categories.
@@ -377,7 +377,7 @@ At the same time, the majority of accidents occur in no rain conditions, which c
 
 ### Temporal Analysis
 
-Here the goal is to analyze the distribution of accidents by hour, day of the week, and month.
+Here the goal is to analyse the distribution of accidents by hour, day of the week, and month.
 
 Hopefully, this analysis provides insights into the temporal patterns of accidents in New York, helping to identify high-risk and safer periods.
 
@@ -424,7 +424,7 @@ ggplot(accidents, aes(x = Hour, y = ..count..)) +
   scale_x_continuous(breaks = seq(0, 24, by = 1), limits = c(0, 24, NA))  # Set breaks from 0 to 24 and limit the x-axis
 ```
 
-The hourly analysis shows accidents in New York throughout the 24h of each day. Accidents don't dip below the thousand at anytime, rising quickly from the early morning around 4AM to 8AM, when the rise slows down until 4PM to 5PM, which represent the peak hour for accidents. These hours represent the movement in the city, from 7AM where the inhabitants move to work, school etc. Around 5PM, where the max is, can be identified with the "Rush hour" where most of the workers end their shift and commute.
+The hourly analysis shows accidents in New York throughout the 24h of each day. Accidents do not dip below the thousand at anytime, rising quickly from the early morning around 4AM to 8AM, when the rise slows down until 4PM to 5PM, which represent the peak hour for accidents. These hours represent the movement in the city, from 7AM where the inhabitants move to work, school etc. Around 5PM, where the max is, can be identified with the "Rush hour" where most of the workers end their shift and commute.
 
 After 6PM, a slow decline in accidents continues during the evening and night until the next morning.
 
@@ -463,11 +463,11 @@ ggplot(accidents, aes(x = Weekday, y = ..count.., group = 1)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-On a daily basis, it's appreciated how differences between days can be huge. 
+On a daily basis, it is appreciated how differences between days can be huge. 
 
 From the start of the week, until Wednesday there is a stable number of accidents, around the 9500. Here it starts to grow slightly until Thursday. On the last working day, on Friday, they rise steeply about a 10%, which could be linked to many factors, including that is the day that most people decide to go out or they move to outside New York for the weekend for different reasons (eg. visiting family, vacation...)
 
-On the weekend on the other hand, maybe a bit counterintuitive, there is a substantial drop in accidents on the area, possibly for the motive mentioned above, of moving outside of this area, or quite the opposite, by it's inhabitants not moving so much by vehicle, meaning a higher stay at home or activities nearby their residence. This drop continues even more on Sunday, which could be related to religious activities as well as possible local policies about certain activities.
+On the weekend on the other hand, maybe a bit counterintuitive, there is a substantial drop in accidents on the area, possibly for the motive mentioned above, of moving outside of this area, or quite the opposite, by its inhabitants not moving so much by vehicle, meaning a higher stay at home or activities nearby their residence. This drop continues even more on Sunday, which could be related to religious activities as well as possible local policies about certain activities.
 
 #### Accidents by Month
 
@@ -1019,7 +1019,7 @@ Depending on the selection, the plots is automatically being updated giving the 
 
 ![Shiny Application](resources\shiny.png)
 
-> It is important to clarify that the above mentioned Esquisse is a Shiny application, that essentially is tailored to setup on the UI the plots that the user wants to see by clicking and dragging the variables, while the setup for the Shiny app is done by the developer, where the user can only select the variables to be shown. More functionality can be added to the Shiny app, but it requires more coding.
+> It is important to clarify that the above mentioned Esquisse is a Shiny application, that essentially is tailored to setup on the UI the plots that the user wants to see by clicking and dragging the variables, while the setup for the Shiny app is done by the developer, where the user can only select the variables to be shown. More functionality can be added to the Shiny app, but it requires more coding. In conclusion, it was more plesant to start working with it than expected as the user interface can be quite easily be created without worrying too much about the design and user experience. Therefore, with the gained experience, both team members have seen its potential and would consider spend some extensive thoughts on a future implementation in another project during their studies, where applicable.
 
 ## Interactive Map of Accidents in New York
 
@@ -1076,9 +1076,9 @@ Another interesting challenge we faced was the impact of having so much informat
 
 Yet, in today’s data-driven world, where the ability to quickly analyze and interpret data is crucial, using AI tools like ChatGPT has become almost essential. The efficiency gains we experienced were undeniable. We could spend less time wrestling with the syntax of R and more time focusing on the bigger picture—interpreting the data, refining our analyses, and communicating our findings. ChatGPT didn’t take away our ability to think critically or creatively; instead, it enhanced our ability to execute on those thoughts more quickly and with greater precision.
 
-Reflecting on our experience, it’s clear that using ChatGPT was like having a turbocharged assistant in our data science toolkit. It didn’t replace our skills in R or our understanding of data, but it did significantly streamline our workflow. We were able to focus more on the insights and less on the mechanics, which made our project not only faster but also richer in the insights we could uncover.
+Reflecting on our experience, it iss clear that using ChatGPT was like having a super quick assistant in our data science toolkit. It did not replace our skills in R or our understanding of data, but it did significantly streamline our workflow. We were able to focus more on the insights and less on the mechanics, which made our project not only faster but also richer in the insights we could uncover.
 
-In conclusion, while tools like ChatGPT are reshaping the way we approach data science, they also remind us of the importance of maintaining our critical thinking and creativity. AI can accelerate the process, but it’s still up to us to ensure that the results are accurate, meaningful, and aligned with our goals. In the end, the combination of human insight and AI-driven efficiency is what made our project a success, and it’s a balance we’ll continue to seek in future endeavors.
+In conclusion, while tools like ChatGPT are reshaping the way we approach data science, they also remind us of the importance of maintaining our critical thinking and creativity. AI can accelerate the process, but it is still up to us to ensure that the results are accurate, meaningful, and aligned with our goals. In the end, the combination of human insight and AI-driven efficiency is what made our project a success, and it is a balance we will continue to seek in future endeavors.
 
 ## Conclusion
 
