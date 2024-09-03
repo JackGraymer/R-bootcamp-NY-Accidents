@@ -51,9 +51,6 @@ rsconnect/
 # ignore the folder data
 data/
 
-# ignore document.html
-document.html
-
 # ignore .pdf
 *.pdf
 
